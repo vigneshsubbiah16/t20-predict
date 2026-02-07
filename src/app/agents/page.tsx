@@ -1,10 +1,17 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getLeaderboardFromDb } from "@/lib/data";
 import { getAgentConfig } from "@/lib/agents-config";
+
+export const metadata: Metadata = {
+  title: "AI Agents - T20 Predict",
+  description:
+    "Meet the 4 AI agents competing to predict T20 World Cup 2026 matches. Compare Claude, GPT, Gemini, and Grok performance.",
+};
 
 export default async function AgentsPage() {
   const entries = await getLeaderboardFromDb();
@@ -66,8 +73,7 @@ export default async function AgentsPage() {
                               : "text-red-600"
                           }`}
                         >
-                          {entry.totalPnl >= 0 ? "+" : ""}$
-                          {Math.abs(entry.totalPnl).toFixed(0)}
+                          {entry.totalPnl >= 0 ? "+" : ""}${Math.abs(entry.totalPnl).toFixed(0)}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
                           P&L

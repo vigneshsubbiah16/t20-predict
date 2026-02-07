@@ -62,12 +62,14 @@ export function ShareMatchButton({
 }: ShareMatchButtonProps) {
   const [copied, setCopied] = useState(false);
   const [supportsNativeShare, setSupportsNativeShare] = useState(false);
+  const [origin, setOrigin] = useState("");
 
   useEffect(() => {
     setSupportsNativeShare(!!navigator.share);
+    setOrigin(window.location.origin);
   }, []);
 
-  const url = `${window.location.origin}/matches/${matchId}`;
+  const url = `${origin}/matches/${matchId}`;
   const text = buildShareText(teamA, teamB, predictions, winner);
 
   function shareToTwitter(): void {

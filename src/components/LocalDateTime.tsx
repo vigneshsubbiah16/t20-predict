@@ -31,14 +31,33 @@ function formatDate(dateString: string, format: LocalDateTimeProps["format"]): s
   }
 }
 
+/** UTC fallback that is safe to render on the server (no locale-dependent output). */
+function formatDateUTC(dateString: string, format: LocalDateTimeProps["format"]): string {
+  const date = new Date(dateString);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const month = months[date.getUTCMonth()];
+  const day = date.getUTCDate();
+
+  switch (format) {
+    case "long": {
+      const year = date.getUTCFullYear();
+      const h = String(date.getUTCHours()).padStart(2, "0");
+      const m = String(date.getUTCMinutes()).padStart(2, "0");
+      return `${month} ${day}, ${year} at ${h}:${m} UTC`;
+    }
+    case "date-only":
+      return `${month} ${day}`;
+    default:
+      return `${month} ${day}, ${date.getUTCFullYear()}`;
+  }
+}
+
 export function LocalDateTime({ dateString, format = "short" }: LocalDateTimeProps) {
-  const [formatted, setFormatted] = useState("");
+  const [formatted, setFormatted] = useState(() => formatDateUTC(dateString, format));
 
   useEffect(() => {
     setFormatted(formatDate(dateString, format));
   }, [dateString, format]);
 
-  // Render empty until client-side effect runs to avoid hydration mismatch.
-  // suppressHydrationWarning handles the empty-to-formatted transition.
   return <span suppressHydrationWarning>{formatted}</span>;
 }

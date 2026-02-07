@@ -363,19 +363,12 @@ export async function getSeasonStatsFromDb(): Promise<{
   totalPredictions: number;
   bestSingleMatchPnl: number;
 }> {
-  const allMatches = await db.select({ cnt: count() }).from(matches);
-  const completed = await db
-    .select({ cnt: count() })
-    .from(matches)
-    .where(eq(matches.status, "completed"));
-  const totalPreds = await db
-    .select({ cnt: count() })
-    .from(predictions)
-    .where(eq(predictions.isLatest, true));
-  const bestPnl = await db
-    .select({ best: max(predictions.pnl) })
-    .from(predictions)
-    .where(eq(predictions.isLatest, true));
+  const [allMatches, completed, totalPreds, bestPnl] = await Promise.all([
+    db.select({ cnt: count() }).from(matches),
+    db.select({ cnt: count() }).from(matches).where(eq(matches.status, "completed")),
+    db.select({ cnt: count() }).from(predictions).where(eq(predictions.isLatest, true)),
+    db.select({ best: max(predictions.pnl) }).from(predictions).where(eq(predictions.isLatest, true)),
+  ]);
 
   return {
     totalMatches: allMatches[0]?.cnt ?? 0,

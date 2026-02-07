@@ -36,15 +36,25 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   }
 
   const totalSeconds = Math.floor(timeLeft / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
+  const totalHours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
+  if (totalHours >= 24) {
+    const days = Math.floor(totalHours / 24);
+    const remainingHours = totalHours % 24;
+    return (
+      <div className="text-3xl font-black font-mono text-primary">
+        {days}d {remainingHours}h
+      </div>
+    );
+  }
+
   return (
     <div className="text-3xl font-black font-mono text-primary">
-      {pad(hours)}:{pad(minutes)}:{pad(seconds)}
+      {pad(totalHours)}:{pad(minutes)}:{pad(seconds)}
     </div>
   );
 }

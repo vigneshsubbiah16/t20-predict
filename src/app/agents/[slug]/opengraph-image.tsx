@@ -102,7 +102,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             marginBottom: 40,
           }}
         >
-          {profile.provider} &middot; {profile.modelId}
+          {profile.provider} {"\u00B7"} {profile.modelId}
         </div>
 
         <div

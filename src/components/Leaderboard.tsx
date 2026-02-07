@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { LeaderboardEntry } from "@/lib/api";
+import { formatStreak } from "@/lib/utils";
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[];
@@ -28,12 +29,6 @@ function getRankBadge(rank: number): React.ReactNode {
   const medal = RANK_MEDALS[rank];
   if (medal) return <span className="text-xl">{medal}</span>;
   return <span className="text-muted-foreground font-mono">#{rank}</span>;
-}
-
-function formatStreak(streak: number): string {
-  if (streak > 0) return `W${streak}`;
-  if (streak < 0) return `L${Math.abs(streak)}`;
-  return "-";
 }
 
 function getProviderColor(provider: string): string {
@@ -137,8 +132,7 @@ export function Leaderboard({ entries }: LeaderboardProps) {
                     entry.totalPnl >= 0 ? "text-emerald-600" : "text-red-600"
                   }`}
                 >
-                  {entry.totalPnl >= 0 ? "+" : ""}$
-                  {Math.abs(entry.totalPnl).toFixed(0)}
+                  {entry.totalPnl >= 0 ? "+" : ""}${Math.abs(entry.totalPnl).toFixed(0)}
                 </TableCell>
                 <TableCell className="text-right font-mono">
                   {entry.totalPredictions > 0

@@ -101,9 +101,14 @@ function PredictionCard({
   const isCorrect =
     winner != null ? prediction.predictedWinner === winner : null;
 
-  const searchQueries: string[] = prediction.searchQueries
-    ? JSON.parse(prediction.searchQueries)
-    : [];
+  let searchQueries: string[] = [];
+  if (prediction.searchQueries) {
+    try {
+      searchQueries = JSON.parse(prediction.searchQueries);
+    } catch {
+      // malformed JSON — fall back to empty array
+    }
+  }
 
   return (
     <div

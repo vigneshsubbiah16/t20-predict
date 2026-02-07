@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Check, X } from "lucide-react";
+import { formatStreak } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -259,12 +260,6 @@ export default async function AgentProfilePage({
       </div>
     </main>
   );
-}
-
-function formatStreak(streak: number): string {
-  if (streak > 0) return `W${streak}`;
-  if (streak < 0) return `L${Math.abs(streak)}`;
-  return "-";
 }
 
 function formatPnl(pnl: number | null): string {

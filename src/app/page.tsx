@@ -40,11 +40,7 @@ async function HeroSection() {
               <div className="text-right">
                 <CountdownTimer targetDate={nextMatch.scheduledAt} />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(nextMatch.scheduledAt).toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  <LocalDateTime dateString={nextMatch.scheduledAt} format="date-only" />
                 </p>
               </div>
             </div>
