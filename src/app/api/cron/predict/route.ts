@@ -4,7 +4,7 @@ import { matches, predictions, agents } from "@/db/schema";
 import { eq, and, lte, gte } from "drizzle-orm";
 import { verifyCronSecret } from "@/lib/cron-auth";
 
-export const maxDuration = 120; // 2 min for Vercel
+export const maxDuration = 60;
 
 export async function GET(request: NextRequest) {
   if (!verifyCronSecret(request)) {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
-    // Find upcoming matches within 48 hours
+    // Find upcoming matches within 48 hours, sorted by scheduled time
     const upcomingMatches = await db
       .select()
       .from(matches)
@@ -27,68 +27,87 @@ export async function GET(request: NextRequest) {
         )
       );
 
+    // Sort by scheduled time (soonest first)
+    upcomingMatches.sort(
+      (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+    );
+
     const activeAgents = await db
       .select()
       .from(agents)
       .where(eq(agents.isActive, true));
 
-    const results: Array<{
-      matchId: string;
-      window: string;
-      predictionsCreated: number;
-      skipped: number;
-    }> = [];
+    // Find the first match that still needs predictions
+    let targetMatch = null;
+    let window = "pre_match";
+    let agentsToCall: typeof activeAgents = [];
+    let skipped = 0;
 
     for (const match of upcomingMatches) {
-      // Determine prediction window
       const hasXi = match.playingXiA && match.playingXiB;
-      const window = hasXi ? "post_xi" : "pre_match";
+      const w = hasXi ? "post_xi" : "pre_match";
 
-      // Check which agents already have predictions (idempotency)
       const existingPreds = await db
         .select({ agentId: predictions.agentId })
         .from(predictions)
         .where(
           and(
             eq(predictions.matchId, match.id),
-            eq(predictions.predictionWindow, window)
+            eq(predictions.predictionWindow, w)
           )
         );
       const existingAgentIds = new Set(existingPreds.map((p) => p.agentId));
+      const remaining = activeAgents.filter((a) => !existingAgentIds.has(a.id));
 
-      const agentsToCall = activeAgents.filter((a) => !existingAgentIds.has(a.id));
-      const skipped = activeAgents.length - agentsToCall.length;
-
-      // Call all agents in parallel
-      const { callAgent } = await import("@/lib/agents/orchestrator");
-      const agentResults = await Promise.allSettled(
-        agentsToCall.map((agent) => callAgent(match, agent))
-      );
-
-      let predictionsCreated = 0;
-      for (let i = 0; i < agentResults.length; i++) {
-        if (agentResults[i].status === "fulfilled") {
-          predictionsCreated++;
-        } else {
-          console.error(
-            `Failed to get prediction from ${agentsToCall[i].displayName} for match ${match.id}:`,
-            (agentResults[i] as PromiseRejectedResult).reason,
-          );
-        }
+      if (remaining.length > 0) {
+        targetMatch = match;
+        window = w;
+        agentsToCall = remaining;
+        skipped = activeAgents.length - remaining.length;
+        break;
       }
+    }
 
-      results.push({
-        matchId: match.id,
-        window,
-        predictionsCreated,
-        skipped,
+    if (!targetMatch) {
+      return NextResponse.json({
+        success: true,
+        message: "All upcoming matches within 48h already have predictions",
+        matchesChecked: upcomingMatches.length,
       });
+    }
+
+    // Call all agents in parallel for this one match
+    const { callAgent } = await import("@/lib/agents/orchestrator");
+    const agentResults = await Promise.allSettled(
+      agentsToCall.map((agent) => callAgent(targetMatch!, agent))
+    );
+
+    let predictionsCreated = 0;
+    const errors: string[] = [];
+    for (let i = 0; i < agentResults.length; i++) {
+      if (agentResults[i].status === "fulfilled") {
+        predictionsCreated++;
+      } else {
+        const reason = String((agentResults[i] as PromiseRejectedResult).reason);
+        errors.push(`${agentsToCall[i].displayName}: ${reason}`);
+        console.error(
+          `Failed: ${agentsToCall[i].displayName} for ${targetMatch.id}:`,
+          reason,
+        );
+      }
     }
 
     return NextResponse.json({
       success: true,
-      matchesProcessed: upcomingMatches.length,
-      results,
+      match: {
+        id: targetMatch.id,
+        teams: `${targetMatch.teamA} vs ${targetMatch.teamB}`,
+        window,
+        predictionsCreated,
+        skipped,
+        errors: errors.length > 0 ? errors : undefined,
+      },
+      remainingMatches: upcomingMatches.length - 1,
     });
   } catch (error) {
     console.error("Cron predict error:", error);
