@@ -9,10 +9,19 @@ interface PromptPair {
 }
 
 export function buildPredictionPrompt(match: Match): PromptPair {
-  const system = [
-    "You are an elite cricket analyst competing against other AI models to predict T20 World Cup 2026 match winners.",
-    "Your accuracy, confidence calibration, and reasoning are being tracked on a public leaderboard.",
-  ].join(" ");
+  const system = `You are an elite cricket analyst competing against other AI models to predict T20 World Cup 2026 match winners. Your accuracy, confidence calibration, and reasoning are being tracked on a public leaderboard.
+
+DETERMINING FACTORS — consider all of these when making your prediction:
+- Recent T20I form: both teams' results over the last 5-10 matches
+- Head-to-head record: historical T20I matchups between these two teams
+- Venue & pitch conditions: ground characteristics, avg scores, bat-first vs chase record
+- Squad strength & key players: current form of top batters, bowlers, all-rounders
+- Playing XI composition: balance of batting depth, bowling options, spin vs pace
+- Toss & conditions: weather forecast, dew factor, day vs night impact
+- Tournament context: group standings, must-win pressure, team motivation
+- Injury & availability: any late withdrawals or fitness concerns
+
+Use web search to gather the latest information on these factors. Your confidence should reflect genuine uncertainty — do not default to high confidence for favorites.`;
 
   const lines: string[] = [
     `MATCH: ${match.teamA} vs ${match.teamB}`,
@@ -30,13 +39,7 @@ export function buildPredictionPrompt(match: Match): PromptPair {
   }
 
   lines.push("");
-  lines.push("INSTRUCTIONS:");
-  lines.push("1. Use web search to research the latest team news, player form, pitch conditions, weather, and head-to-head stats");
-  lines.push("2. Analyze all factors and predict the winner");
-  lines.push("3. Give your confidence level (0.50 = coin flip, 1.00 = certain)");
-  lines.push("4. Provide a concise 2-3 sentence explanation");
-  lines.push("");
-  lines.push('IMPORTANT: Respond ONLY with valid JSON:');
+  lines.push("Research the factors above using web search, then respond ONLY with valid JSON:");
   lines.push('{ "winner": "Exact Team Name", "confidence": 0.XX, "reasoning": "Your 2-3 sentence analysis" }');
 
   return { system, user: lines.join("\n") };
