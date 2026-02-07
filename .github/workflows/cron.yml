@@ -6,14 +6,41 @@ on:
   workflow_dispatch: # Manual trigger
 
 jobs:
-  predict:
+  predict-claude:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger predictions for upcoming matches
+      - name: Claude Opus prediction
         run: |
-          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/predict" \
+          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=claude-opus" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 120 || true
+            --max-time 90 || true
+
+  predict-gpt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: GPT prediction
+        run: |
+          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=gpt-5" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 90 || true
+
+  predict-gemini:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gemini prediction
+        run: |
+          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=gemini-3" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 90 || true
+
+  predict-grok:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Grok prediction
+        run: |
+          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=grok" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 90 || true
 
   check-results:
     runs-on: ubuntu-latest
@@ -22,13 +49,13 @@ jobs:
         run: |
           curl -s -X GET "${{ secrets.APP_URL }}/api/cron/results" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 60 || true
+            --max-time 90 || true
 
   check-team-news:
     runs-on: ubuntu-latest
     steps:
-      - name: Check for playing XI announcements
+      - name: Check for playing XI / toss announcements
         run: |
           curl -s -X GET "${{ secrets.APP_URL }}/api/cron/team-news" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 60 || true
+            --max-time 90 || true
