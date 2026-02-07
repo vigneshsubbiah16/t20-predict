@@ -1,16 +1,53 @@
 import { db } from "@/db";
 import { agents, matches, predictions } from "@/db/schema";
-import { eq, and, desc, asc, sql, isNull } from "drizzle-orm";
+import { eq, and, desc, asc, sql, count, max } from "drizzle-orm";
 import { STARTING_BANKROLL } from "@/lib/scoring";
 import type {
   Match,
-  Prediction,
   MatchWithPredictions,
   LeaderboardEntry,
   ActivityItem,
   AgentProfile,
   Agent,
 } from "@/lib/api";
+
+// ============ HELPERS ============
+
+function calculateStreaks(settledPreds: { isCorrect: boolean | null }[]): {
+  currentStreak: number;
+  bestStreak: number;
+} {
+  let bestStreak = 0;
+  let tempStreak = 0;
+
+  for (const pred of settledPreds) {
+    if (pred.isCorrect) {
+      tempStreak++;
+      bestStreak = Math.max(bestStreak, tempStreak);
+    } else {
+      tempStreak = 0;
+    }
+  }
+
+  // Current streak: count from the end
+  let currentStreak = 0;
+  for (let i = settledPreds.length - 1; i >= 0; i--) {
+    if (settledPreds[i].isCorrect) {
+      currentStreak++;
+    } else {
+      // Count consecutive losses from the end
+      let losses = 0;
+      for (let j = settledPreds.length - 1; j >= 0; j--) {
+        if (!settledPreds[j].isCorrect) losses++;
+        else break;
+      }
+      currentStreak = -losses;
+      break;
+    }
+  }
+
+  return { currentStreak, bestStreak };
+}
 
 // ============ MATCHES ============
 
@@ -115,35 +152,7 @@ export async function getLeaderboardFromDb(sort?: string): Promise<LeaderboardEn
         ? settledPreds.reduce((sum, p) => sum + (p.brierScore || 0), 0) / totalPredictions
         : 0;
 
-    // Calculate streaks
-    let currentStreak = 0;
-    let bestStreak = 0;
-    let tempStreak = 0;
-
-    for (const pred of settledPreds) {
-      if (pred.isCorrect) {
-        tempStreak++;
-        bestStreak = Math.max(bestStreak, tempStreak);
-      } else {
-        tempStreak = 0;
-      }
-    }
-    // Current streak: count from the end
-    for (let i = settledPreds.length - 1; i >= 0; i--) {
-      if (settledPreds[i].isCorrect) {
-        currentStreak++;
-      } else {
-        currentStreak = -(1); // Mark as losing streak
-        // Count consecutive losses
-        let losses = 0;
-        for (let j = settledPreds.length - 1; j >= 0; j--) {
-          if (!settledPreds[j].isCorrect) losses++;
-          else break;
-        }
-        currentStreak = -losses;
-        break;
-      }
-    }
+    const { currentStreak, bestStreak } = calculateStreaks(settledPreds);
 
     entries.push({
       agentId: agent.id,
@@ -212,33 +221,11 @@ export async function getAgentProfileFromDb(slug: string): Promise<AgentProfile 
   const correctPreds = settledPreds.filter((p) => p.isCorrect);
   const totalPnl = settledPreds.reduce((sum, p) => sum + (p.pnl || 0), 0);
 
-  // Streaks
-  let currentStreak = 0;
-  let bestStreak = 0;
-  let tempStreak = 0;
+  // Streaks (sorted chronologically for correct ordering)
   const sortedSettled = [...settledPreds].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
-  for (const pred of sortedSettled) {
-    if (pred.isCorrect) {
-      tempStreak++;
-      bestStreak = Math.max(bestStreak, tempStreak);
-    } else {
-      tempStreak = 0;
-    }
-  }
-  for (let i = sortedSettled.length - 1; i >= 0; i--) {
-    if (sortedSettled[i].isCorrect) currentStreak++;
-    else {
-      let losses = 0;
-      for (let j = sortedSettled.length - 1; j >= 0; j--) {
-        if (!sortedSettled[j].isCorrect) losses++;
-        else break;
-      }
-      currentStreak = -losses;
-      break;
-    }
-  }
+  const { currentStreak, bestStreak } = calculateStreaks(sortedSettled);
 
   // Head to head
   const otherAgents = await db
@@ -335,6 +322,7 @@ export async function getRecentPredictionsFromDb(limit = 20): Promise<ActivityIt
   const preds = await db
     .select()
     .from(predictions)
+    .where(eq(predictions.isLatest, true))
     .orderBy(desc(predictions.createdAt))
     .limit(limit);
 
@@ -365,4 +353,34 @@ export async function getRecentPredictionsFromDb(limit = 20): Promise<ActivityIt
       createdAt: p.createdAt,
     };
   });
+}
+
+// ============ SEASON STATS ============
+
+export async function getSeasonStatsFromDb(): Promise<{
+  totalMatches: number;
+  completedMatches: number;
+  totalPredictions: number;
+  bestSingleMatchPnl: number;
+}> {
+  const allMatches = await db.select({ cnt: count() }).from(matches);
+  const completed = await db
+    .select({ cnt: count() })
+    .from(matches)
+    .where(eq(matches.status, "completed"));
+  const totalPreds = await db
+    .select({ cnt: count() })
+    .from(predictions)
+    .where(eq(predictions.isLatest, true));
+  const bestPnl = await db
+    .select({ best: max(predictions.pnl) })
+    .from(predictions)
+    .where(eq(predictions.isLatest, true));
+
+  return {
+    totalMatches: allMatches[0]?.cnt ?? 0,
+    completedMatches: completed[0]?.cnt ?? 0,
+    totalPredictions: totalPreds[0]?.cnt ?? 0,
+    bestSingleMatchPnl: bestPnl[0]?.best ?? 0,
+  };
 }

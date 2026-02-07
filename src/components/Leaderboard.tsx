@@ -18,11 +18,22 @@ interface LeaderboardProps {
   entries: LeaderboardEntry[];
 }
 
+const RANK_MEDALS: Record<number, string> = {
+  1: "\u{1F947}",
+  2: "\u{1F948}",
+  3: "\u{1F949}",
+};
+
 function getRankBadge(rank: number): React.ReactNode {
-  if (rank === 1) return <span className="text-xl">1st</span>;
-  if (rank === 2) return <span className="text-xl">2nd</span>;
-  if (rank === 3) return <span className="text-xl">3rd</span>;
+  const medal = RANK_MEDALS[rank];
+  if (medal) return <span className="text-xl">{medal}</span>;
   return <span className="text-muted-foreground font-mono">#{rank}</span>;
+}
+
+function formatStreak(streak: number): string {
+  if (streak > 0) return `W${streak}`;
+  if (streak < 0) return `L${Math.abs(streak)}`;
+  return "-";
 }
 
 function getProviderColor(provider: string): string {
@@ -135,11 +146,7 @@ export function Leaderboard({ entries }: LeaderboardProps) {
                     : "-"}
                 </TableCell>
                 <TableCell className="text-right font-mono">
-                  {entry.currentStreak > 0
-                    ? `W${entry.currentStreak}`
-                    : entry.currentStreak < 0
-                    ? `L${Math.abs(entry.currentStreak)}`
-                    : "-"}
+                  {formatStreak(entry.currentStreak)}
                 </TableCell>
               </TableRow>
             ))}

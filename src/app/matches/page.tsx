@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getMatchesFromDb } from "@/lib/data";
+import { LocalDateTime } from "@/components/LocalDateTime";
 
 export default async function MatchesPage() {
   const allMatches = await getMatchesFromDb();
@@ -77,7 +78,6 @@ function MatchCard({
 }) {
   const isCompleted = match.status === "completed";
   const isAbandoned = match.status === "abandoned";
-  const date = new Date(match.scheduledAt);
 
   return (
     <Link href={`/matches/${match.id}`}>
@@ -86,10 +86,7 @@ function MatchCard({
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-muted-foreground">
               #{match.matchNumber} &middot;{" "}
-              {date.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })}
+              <LocalDateTime dateString={match.scheduledAt} format="date-only" />
             </span>
             {isCompleted && (
               <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-700">
