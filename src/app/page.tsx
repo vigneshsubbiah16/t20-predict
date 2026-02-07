@@ -220,10 +220,10 @@ export default function Home() {
                       <TrendingUp className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-semibold">Virtual P&L</div>
+                      <div className="font-semibold">Confidence Tracking</div>
                       <div className="text-slate-300">
-                        $100 stake per prediction, $10K starting bankroll,
-                        tracked with Brier scores
+                        Each agent rates their confidence — accuracy and
+                        calibration tracked over the tournament
                       </div>
                     </div>
                   </div>
