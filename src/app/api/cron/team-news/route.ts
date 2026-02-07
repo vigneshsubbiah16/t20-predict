@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { matches } from "@/db/schema";
 import { eq, and, lte, gte, isNull } from "drizzle-orm";
 import { verifyCronSecret } from "@/lib/cron-auth";
+import { searchTeamNews } from "@/lib/cricket-search";
 
 export const maxDuration = 60;
 
@@ -75,13 +76,33 @@ export async function GET(request: NextRequest) {
     const results: Array<{ matchId: string; status: string }> = [];
 
     for (const match of upcoming) {
-      if (!match.espnId) {
-        results.push({ matchId: match.id, status: "no_espn_id" });
-        continue;
+      // Try ESPN first if we have an ID, otherwise use AI web search
+      let xiData: {
+        playingXiA: string[] | null;
+        playingXiB: string[] | null;
+        tossWinner: string | null;
+        tossDecision: string | null;
+      } | null = null;
+
+      if (match.espnId) {
+        xiData = await fetchPlayingXI(match.espnId);
+      } else {
+        const aiResult = await searchTeamNews(
+          match.teamA,
+          match.teamB,
+          match.scheduledAt,
+        );
+        if (aiResult?.tossOccurred) {
+          xiData = {
+            playingXiA: aiResult.playingXiA,
+            playingXiB: aiResult.playingXiB,
+            tossWinner: aiResult.tossWinner,
+            tossDecision: aiResult.tossDecision,
+          };
+        }
       }
 
-      const xiData = await fetchPlayingXI(match.espnId);
-      if (!xiData || (!xiData.playingXiA && !xiData.playingXiB)) {
+      if (!xiData || (!xiData.playingXiA && !xiData.playingXiB && !xiData.tossWinner)) {
         results.push({ matchId: match.id, status: "xi_not_available" });
         continue;
       }

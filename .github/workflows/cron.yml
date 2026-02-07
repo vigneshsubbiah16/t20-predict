@@ -1,0 +1,34 @@
+name: T20 Predict Cron
+
+on:
+  schedule:
+    - cron: "*/20 * * * *" # Every 20 minutes
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger predictions for upcoming matches
+        run: |
+          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/predict" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 120 || true
+
+  check-results:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check and settle completed matches
+        run: |
+          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/results" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 60 || true
+
+  check-team-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for playing XI announcements
+        run: |
+          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/team-news" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 60 || true

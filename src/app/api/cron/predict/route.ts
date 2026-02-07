@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { matches, predictions, agents } from "@/db/schema";
-import { eq, and, sql, lte, gte } from "drizzle-orm";
+import { eq, and, lte, gte } from "drizzle-orm";
 import { verifyCronSecret } from "@/lib/cron-auth";
 
 export const maxDuration = 120; // 2 min for Vercel
@@ -44,35 +44,36 @@ export async function GET(request: NextRequest) {
       const hasXi = match.playingXiA && match.playingXiB;
       const window = hasXi ? "post_xi" : "pre_match";
 
-      let predictionsCreated = 0;
-      let skipped = 0;
-
-      for (const agent of activeAgents) {
-        // Idempotency: skip if prediction already exists for this match+agent+window
-        const existing = await db
-          .select({ id: predictions.id })
-          .from(predictions)
-          .where(
-            and(
-              eq(predictions.matchId, match.id),
-              eq(predictions.agentId, agent.id),
-              eq(predictions.predictionWindow, window)
-            )
+      // Check which agents already have predictions (idempotency)
+      const existingPreds = await db
+        .select({ agentId: predictions.agentId })
+        .from(predictions)
+        .where(
+          and(
+            eq(predictions.matchId, match.id),
+            eq(predictions.predictionWindow, window)
           )
-          .limit(1);
+        );
+      const existingAgentIds = new Set(existingPreds.map((p) => p.agentId));
 
-        if (existing.length > 0) {
-          skipped++;
-          continue;
-        }
+      const agentsToCall = activeAgents.filter((a) => !existingAgentIds.has(a.id));
+      const skipped = activeAgents.length - agentsToCall.length;
 
-        // Dynamically import orchestrator to avoid loading AI SDKs at module level
-        try {
-          const { callAgent } = await import("@/lib/agents/orchestrator");
-          await callAgent(match, agent);
+      // Call all agents in parallel
+      const { callAgent } = await import("@/lib/agents/orchestrator");
+      const agentResults = await Promise.allSettled(
+        agentsToCall.map((agent) => callAgent(match, agent))
+      );
+
+      let predictionsCreated = 0;
+      for (let i = 0; i < agentResults.length; i++) {
+        if (agentResults[i].status === "fulfilled") {
           predictionsCreated++;
-        } catch (err) {
-          console.error(`Failed to get prediction from ${agent.displayName} for match ${match.id}:`, err);
+        } else {
+          console.error(
+            `Failed to get prediction from ${agentsToCall[i].displayName} for match ${match.id}:`,
+            (agentResults[i] as PromiseRejectedResult).reason,
+          );
         }
       }
 

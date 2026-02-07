@@ -4,6 +4,7 @@ import { matches, predictions } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { calculatePnl, calculateBrierScore } from "@/lib/scoring";
+import { searchMatchResult } from "@/lib/cricket-search";
 
 export const maxDuration = 60;
 
@@ -102,12 +103,32 @@ export async function GET(request: NextRequest) {
     const results: Array<{ matchId: string; status: string; settled?: number }> = [];
 
     for (const match of possiblyCompleted) {
-      if (!match.espnId) {
-        results.push({ matchId: match.id, status: "no_espn_id" });
-        continue;
+      let result: EspnMatchResult | null = null;
+
+      if (match.espnId) {
+        result = await fetchEspnResult(match.espnId);
+      } else {
+        // Fallback: use AI web search to check the result
+        const aiResult = await searchMatchResult(
+          match.teamA,
+          match.teamB,
+          match.scheduledAt,
+        );
+        if (aiResult?.completed && aiResult.winner) {
+          // Match winner name to team_a or team_b
+          const winnerLower = aiResult.winner.toLowerCase();
+          const isTeamA =
+            winnerLower === match.teamA.toLowerCase() ||
+            winnerLower.includes(match.teamA.toLowerCase()) ||
+            match.teamA.toLowerCase().includes(winnerLower);
+          result = {
+            winner: isTeamA ? "team_a" : "team_b",
+            winnerTeamName: isTeamA ? match.teamA : match.teamB,
+            resultSummary: aiResult.resultSummary || "",
+          };
+        }
       }
 
-      const result = await fetchEspnResult(match.espnId);
       if (!result) {
         results.push({ matchId: match.id, status: "not_completed_yet" });
         continue;
