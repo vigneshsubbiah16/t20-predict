@@ -76,6 +76,9 @@ export default function RootLayout({
                 <Link href="/agents" className="hover:text-foreground">
                   Agents
                 </Link>
+                <Link href="/how-it-works" className="hover:text-foreground">
+                  How It Works
+                </Link>
               </div>
             </div>
             <div className="border-t pt-4 text-xs text-muted-foreground text-center space-y-1">

@@ -4,11 +4,13 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Leaderboard } from "@/components/Leaderboard";
-import { Target, TrendingUp, Trophy, DollarSign, BarChart3 } from "lucide-react";
+import { Target } from "lucide-react";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { LocalDateTime } from "@/components/LocalDateTime";
+import { AgentRankCards } from "@/components/AgentRankCards";
+import type { LeaderboardEntry } from "@/lib/api";
 import { getLeaderboardFromDb, getMatchesFromDb, getRecentPredictionsFromDb, getSeasonStatsFromDb } from "@/lib/data";
+import { generateNarrativeHeadline } from "@/lib/narrative";
 import { formatMatchLabel } from "@/lib/utils";
 
 async function HeroSection() {
@@ -51,63 +53,45 @@ async function HeroSection() {
   }
 }
 
-async function LeaderboardSection() {
-  try {
-    const entries = await getLeaderboardFromDb();
-    return <Leaderboard entries={entries} />;
-  } catch {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          Leaderboard will appear after the first match is settled.
-        </CardContent>
-      </Card>
-    );
-  }
-}
-
 async function ActivityFeed() {
   try {
-    const items = await getRecentPredictionsFromDb(10);
-    if (items.length === 0) {
-      return (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Predictions will appear here once the tournament starts.
-          </CardContent>
-        </Card>
-      );
-    }
+    const items = await getRecentPredictionsFromDb(8);
+
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Recent Activity</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {items.map((item) => (
-            <Link
-              key={item.id}
-              href={`/matches/${item.matchId}`}
-              className="flex items-start gap-2 text-sm hover:bg-muted/50 rounded p-1 -mx-1"
-            >
-              <div
-                className="w-2 h-2 rounded-full mt-1.5 shrink-0"
-                style={{ backgroundColor: item.agentColor }}
-              />
-              <div>
-                <span className="font-medium">{item.agentName}</span> picked{" "}
-                <span className="font-semibold">{item.predictedTeamName}</span>{" "}
-                ({Math.round(item.confidence * 100)}%)
-                <div className="text-xs text-muted-foreground">
-                  {item.teamA} vs {item.teamB} &middot;{" "}
-                  <LocalDateTime dateString={item.createdAt} />
-                </div>
-              </div>
-            </Link>
-          ))}
+        <CardContent>
+          {items.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Predictions will appear here once the tournament starts.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {items.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/matches/${item.matchId}`}
+                  className="flex items-start gap-2 text-sm hover:bg-muted/50 rounded p-1 -mx-1"
+                >
+                  <div
+                    className="w-2 h-2 rounded-full mt-1.5 shrink-0"
+                    style={{ backgroundColor: item.agentColor }}
+                  />
+                  <div>
+                    <span className="font-medium">{item.agentName}</span> picked{" "}
+                    <span className="font-semibold">{item.predictedTeamName}</span>{" "}
+                    ({Math.round(item.confidence * 100)}%)
+                    <div className="text-xs text-muted-foreground">
+                      {item.teamA} vs {item.teamB} &middot;{" "}
+                      <LocalDateTime dateString={item.createdAt} />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -123,7 +107,7 @@ async function RecentResults() {
     if (recent.length === 0) return null;
 
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Recent Results</CardTitle>
         </CardHeader>
@@ -155,33 +139,24 @@ async function SeasonStats() {
     const stats = await getSeasonStatsFromDb();
     return (
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Season Stats</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Starting Bankroll</span>
-            <span className="font-mono font-semibold">$10,000</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Stake per Bet</span>
-            <span className="font-mono font-semibold">$100</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Matches Played</span>
-            <span className="font-mono font-semibold">
-              {stats.completedMatches}/{stats.totalMatches}
-            </span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Predictions Made</span>
-            <span className="font-mono font-semibold">{stats.totalPredictions}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Best Return</span>
-            <span className="font-mono font-semibold text-emerald-600">
-              {stats.bestSingleMatchPnl > 0 ? `+$${stats.bestSingleMatchPnl.toFixed(0)}` : "-"}
-            </span>
+        <CardContent className="py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Matches</span>
+              <span className="font-mono font-semibold">
+                {stats.completedMatches}/{stats.totalMatches}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Predictions</span>
+              <span className="font-mono font-semibold">{stats.totalPredictions}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Best Return</span>
+              <span className="font-mono font-semibold text-emerald-600">
+                {stats.bestSingleMatchPnl > 0 ? `+$${stats.bestSingleMatchPnl.toFixed(0)}` : "-"}
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -191,11 +166,22 @@ async function SeasonStats() {
   }
 }
 
-export default function Home() {
+async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
+  try {
+    return await getLeaderboardFromDb();
+  } catch {
+    return [];
+  }
+}
+
+export default async function Home() {
+  const entries = await fetchLeaderboard();
+  const { headline, subline } = generateNarrativeHeadline(entries);
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="container mx-auto px-4 py-8">
-        {/* Hero */}
+        {/* Hero - Next Match */}
         <section className="mb-8">
           <Suspense
             fallback={
@@ -210,161 +196,31 @@ export default function Home() {
           </Suspense>
         </section>
 
-        {/* Two column layout */}
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Leaderboard */}
-          <div className="lg:col-span-2 space-y-6">
-            <Suspense
-              fallback={
-                <Card>
-                  <CardContent className="py-8 text-center text-muted-foreground animate-pulse">
-                    Loading leaderboard...
-                  </CardContent>
-                </Card>
-              }
-            >
-              <LeaderboardSection />
-            </Suspense>
+        {/* Narrative Headline */}
+        <section className="mb-8">
+          <h2 className="text-3xl font-black tracking-tight">{headline}</h2>
+          <p className="text-lg text-muted-foreground mt-1">{subline}</p>
+        </section>
 
-          </div>
+        {/* Agent Rank Cards */}
+        <section className="mb-10">
+          <AgentRankCards entries={entries} />
+        </section>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Suspense fallback={null}>
-              <ActivityFeed />
-            </Suspense>
-            <Suspense fallback={null}>
-              <RecentResults />
-            </Suspense>
-            <Suspense fallback={null}>
-              <SeasonStats />
-            </Suspense>
-          </div>
+        {/* Activity + Results side by side */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Suspense fallback={null}>
+            <ActivityFeed />
+          </Suspense>
+          <Suspense fallback={null}>
+            <RecentResults />
+          </Suspense>
         </div>
 
-        {/* How Scoring Works */}
-        <section className="mt-8">
-          <Card>
-            <CardContent className="py-6">
-              <h3 className="font-bold text-lg mb-4">How Scoring Works</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Each agent stakes <span className="font-mono font-semibold text-foreground">$100</span> per match. Their stated confidence sets the odds — bold correct calls earn more, overconfidence is punished.
-              </p>
-              <div className="grid md:grid-cols-3 gap-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Trophy className="w-4 h-4 text-amber-500" />
-                    <span className="font-semibold text-sm">Points</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    1 point per correct pick. Simple accuracy count.
-                  </p>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="w-4 h-4 text-emerald-500" />
-                    <span className="font-semibold text-sm">P&L (Profit & Loss)</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Confidence sets the payout. Wrong = lose $100. Right = profit based on odds:
-                  </p>
-                  <div className="rounded-md bg-muted/50 p-2 text-xs font-mono space-y-1">
-                    <div className="flex justify-between">
-                      <span>Correct at 60%</span>
-                      <span className="text-emerald-600 font-semibold">+$67</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Correct at 80%</span>
-                      <span className="text-emerald-600 font-semibold">+$25</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Correct at 95%</span>
-                      <span className="text-emerald-600 font-semibold">+$5</span>
-                    </div>
-                    <div className="flex justify-between border-t pt-1 mt-1">
-                      <span>Wrong (any %)</span>
-                      <span className="text-red-600 font-semibold">-$100</span>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <BarChart3 className="w-4 h-4 text-blue-500" />
-                    <span className="font-semibold text-sm">Brier Score</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Measures calibration quality. Lower is better (0 = perfect).
-                  </p>
-                  <div className="rounded-md bg-muted/50 p-2 text-xs font-mono space-y-1">
-                    <div className="flex justify-between">
-                      <span>95% &amp; right</span>
-                      <span className="text-emerald-600 font-semibold">0.003</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>60% &amp; right</span>
-                      <span className="text-amber-600 font-semibold">0.160</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>60% &amp; wrong</span>
-                      <span className="text-red-600 font-semibold">0.360</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>95% &amp; wrong</span>
-                      <span className="text-red-600 font-semibold">0.903</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* How it works */}
-        <section className="mt-6">
-          <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white border-0">
-            <CardContent className="py-6">
-              <h3 className="font-bold text-lg mb-3">How It Works</h3>
-              <div className="grid md:grid-cols-3 gap-4 text-sm">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                    <Target className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">AI Predictions</div>
-                    <div className="text-slate-300">
-                      4 frontier AI models predict every T20 World Cup match
-                      using web search
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                    <TrendingUp className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Confidence Tracking</div>
-                    <div className="text-slate-300">
-                      Each agent rates their confidence — accuracy and
-                      calibration tracked over the tournament
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                    <Trophy className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Leaderboard</div>
-                    <div className="text-slate-300">
-                      Claude vs GPT vs Gemini vs Grok — which AI best predicts
-                      cricket?
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+        {/* Season Stats bar */}
+        <Suspense fallback={null}>
+          <SeasonStats />
+        </Suspense>
       </div>
     </main>
   );

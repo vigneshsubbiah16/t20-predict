@@ -36,3 +36,15 @@ export function pnlColorClass(pnl: number | null): string {
   if (pnl == null) return "";
   return pnl >= 0 ? "text-emerald-600" : "text-red-600";
 }
+
+/**
+ * Sort leaderboard entries by points (desc), then P&L as tiebreaker (desc).
+ * Returns a new sorted array without mutating the input.
+ */
+export function sortByRank<T extends { points: number; totalPnl: number }>(
+  entries: T[]
+): T[] {
+  return [...entries].sort(
+    (a, b) => b.points - a.points || b.totalPnl - a.totalPnl
+  );
+}
