@@ -20,6 +20,14 @@ export function generateNarrativeHeadline(
 
   const sorted = sortByRank(entries);
   const leader = sorted[0];
+
+  if (sorted.length < 2) {
+    return {
+      headline: `${leader.displayName} leads with ${leader.points} correct pick${leader.points !== 1 ? "s" : ""}`,
+      subline: "The battle is just getting started",
+    };
+  }
+
   const second = sorted[1];
   const last = sorted[sorted.length - 1];
   const pointSpread = leader.points - last.points;

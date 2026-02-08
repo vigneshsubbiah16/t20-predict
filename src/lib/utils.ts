@@ -28,7 +28,7 @@ export function formatStreak(streak: number): string {
 
 export function formatPnl(pnl: number | null): string {
   if (pnl == null) return "-";
-  const sign = pnl >= 0 ? "+" : "";
+  const sign = pnl >= 0 ? "+" : "-";
   return `${sign}$${Math.abs(pnl).toFixed(0)}`;
 }
 

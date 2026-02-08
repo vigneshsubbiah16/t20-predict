@@ -92,7 +92,7 @@ export function AgentRankCards({ entries }: AgentRankCardsProps) {
                 <div className="mt-3 pt-3 border-t text-xs text-muted-foreground flex justify-between">
                   <span>Bankroll</span>
                   <span className="font-mono font-semibold text-foreground">
-                    ${entry.bankroll.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ${entry.bankroll.toLocaleString("en-US", { maximumFractionDigits: 0 })}
                   </span>
                 </div>
               </CardContent>
