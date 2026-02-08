@@ -297,3 +297,88 @@ test.describe("T20 Predict — Full E2E Flow", () => {
     expect(body.length).toBeGreaterThanOrEqual(1);
   });
 });
+
+test.describe("Security — Auth & Input Validation", () => {
+  // All protected endpoints must reject unauthenticated requests
+  test("POST /api/admin/seed without auth returns 401", async ({ request }) => {
+    const res = await request.post("/api/admin/seed");
+    expect(res.status()).toBe(401);
+  });
+
+  test("POST /api/admin/seed with wrong secret returns 401", async ({ request }) => {
+    const res = await request.post("/api/admin/seed", {
+      headers: { Authorization: "Bearer wrong-secret" },
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  test("POST /api/admin/manual-settle without auth returns 401", async ({ request }) => {
+    const res = await request.post("/api/admin/manual-settle");
+    expect(res.status()).toBe(401);
+  });
+
+  test("POST /api/admin/simulate-toss without auth returns 401", async ({ request }) => {
+    const res = await request.post("/api/admin/simulate-toss");
+    expect(res.status()).toBe(401);
+  });
+
+  test("POST /api/admin/trigger-predict without auth returns 401", async ({ request }) => {
+    const res = await request.post("/api/admin/trigger-predict");
+    expect(res.status()).toBe(401);
+  });
+
+  test("GET /api/cron/predict without auth returns 401", async ({ request }) => {
+    const res = await request.get("/api/cron/predict");
+    expect(res.status()).toBe(401);
+  });
+
+  test("GET /api/cron/results without auth returns 401", async ({ request }) => {
+    const res = await request.get("/api/cron/results");
+    expect(res.status()).toBe(401);
+  });
+
+  test("GET /api/cron/team-news without auth returns 401", async ({ request }) => {
+    const res = await request.get("/api/cron/team-news");
+    expect(res.status()).toBe(401);
+  });
+
+  // Error responses must not leak internals
+  test("500 errors return generic message, not stack traces", async ({ request }) => {
+    const res = await request.post("/api/admin/manual-settle", {
+      headers: { ...AUTH_HEADER, "Content-Type": "application/json" },
+      data: {},
+    });
+    if (res.status() === 500) {
+      const body = await res.json();
+      expect(body.error).toBe("Internal server error");
+      expect(body.error).not.toContain("at ");
+      expect(body.error).not.toContain("Error:");
+    }
+  });
+
+  // Input validation on public endpoints
+  test("GET /api/matches?status=INVALID returns 400", async ({ request }) => {
+    const res = await request.get("/api/matches?status=INVALID");
+    expect(res.status()).toBe(400);
+  });
+
+  test("GET /api/matches?stage=INVALID returns 400", async ({ request }) => {
+    const res = await request.get("/api/matches?stage=INVALID");
+    expect(res.status()).toBe(400);
+  });
+
+  test("GET /api/matches?status=upcoming returns 200", async ({ request }) => {
+    const res = await request.get("/api/matches?status=upcoming");
+    expect(res.ok()).toBeTruthy();
+  });
+
+  test("GET /api/leaderboard?sort=INVALID returns 400", async ({ request }) => {
+    const res = await request.get("/api/leaderboard?sort=INVALID");
+    expect(res.status()).toBe(400);
+  });
+
+  test("GET /api/leaderboard?sort=pnl returns 200", async ({ request }) => {
+    const res = await request.get("/api/leaderboard?sort=pnl");
+    expect(res.ok()).toBeTruthy();
+  });
+});

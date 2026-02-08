@@ -9,6 +9,16 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const stage = searchParams.get("stage");
 
+    const VALID_STATUSES = ["upcoming", "live", "completed", "abandoned"];
+    const VALID_STAGES = ["group", "super8", "semi", "final"];
+
+    if (status && !VALID_STATUSES.includes(status)) {
+      return NextResponse.json({ error: "Invalid status parameter" }, { status: 400 });
+    }
+    if (stage && !VALID_STAGES.includes(stage)) {
+      return NextResponse.json({ error: "Invalid stage parameter" }, { status: 400 });
+    }
+
     const conditions = [];
     if (status) conditions.push(eq(matches.status, status));
     if (stage) conditions.push(eq(matches.stage, stage));

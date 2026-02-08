@@ -5,6 +5,7 @@ import { eq, and, isNull } from "drizzle-orm";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { calculatePnl, calculateBrierScore } from "@/lib/scoring";
 import { searchMatchResult } from "@/lib/cricket-search";
+import { isValidEspnId } from "@/lib/validation";
 
 export const maxDuration = 60;
 
@@ -88,11 +89,7 @@ export async function GET(request: NextRequest) {
     const pendingMatches = await db
       .select()
       .from(matches)
-      .where(
-        and(
-          eq(matches.status, "upcoming"),
-        )
-      );
+      .where(eq(matches.status, "upcoming"));
 
     // Filter to matches whose scheduled time + 5 hours is in the past (match should be over)
     const possiblyCompleted = pendingMatches.filter((m) => {
@@ -105,9 +102,13 @@ export async function GET(request: NextRequest) {
     for (const match of possiblyCompleted) {
       let result: EspnMatchResult | null = null;
 
-      if (match.espnId) {
+      if (match.espnId && isValidEspnId(match.espnId)) {
         result = await fetchEspnResult(match.espnId);
-      } else {
+      } else if (match.espnId) {
+        console.error(`Invalid espnId for match ${match.id}: ${match.espnId}`);
+      }
+
+      if (!result) {
         // Fallback: use AI web search to check the result
         const aiResult = await searchMatchResult(
           match.teamA,
@@ -158,7 +159,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Cron results error:", error);
     return NextResponse.json(
-      { success: false, error: String(error) },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
