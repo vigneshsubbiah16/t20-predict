@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import type { LeaderboardEntry } from "@/lib/api";
-import { getAgentConfig } from "@/lib/agents-config";
+import { ProviderIcon } from "@/components/ProviderIcon";
 import { formatPnl, formatStreak, pnlColorClass, sortByRank } from "@/lib/utils";
 
 const RANK_MEDALS: Record<number, string> = {
@@ -31,8 +31,6 @@ export function AgentRankCards({ entries }: AgentRankCardsProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {sorted.map((entry, index) => {
         const rank = index + 1;
-        const config = getAgentConfig(entry.agentId);
-        const initials = config?.initials ?? entry.displayName.slice(0, 2);
         const medal = RANK_MEDALS[rank];
 
         return (
@@ -51,10 +49,10 @@ export function AgentRankCards({ entries }: AgentRankCardsProps) {
                     {medal ?? <span className="text-muted-foreground font-mono text-lg">#{rank}</span>}
                   </div>
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-                    style={{ backgroundColor: entry.color }}
+                    className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: entry.color + "15" }}
                   >
-                    {initials}
+                    <ProviderIcon provider={entry.provider} size={26} color={entry.color} />
                   </div>
                   <div>
                     <div className="font-bold text-base">{entry.displayName}</div>

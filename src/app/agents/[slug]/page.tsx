@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Check, X } from "lucide-react";
+import { ProviderIcon } from "@/components/ProviderIcon";
 import { formatStreak, formatPnl, pnlColorClass } from "@/lib/utils";
 
 export async function generateMetadata({
@@ -67,10 +68,10 @@ export default async function AgentProfilePage({
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-lg"
-              style={{ backgroundColor: profile.color }}
+              className="w-14 h-14 rounded-2xl flex items-center justify-center"
+              style={{ backgroundColor: profile.color + "15" }}
             >
-              {config?.initials || profile.displayName[0]}
+              <ProviderIcon provider={profile.provider} size={32} color={profile.color} />
             </div>
             <div>
               <h1 className="text-3xl font-black">{profile.displayName}</h1>
@@ -174,12 +175,12 @@ export default async function AgentProfilePage({
                   return (
                     <div key={h2h.agentId} className="text-center">
                       <div
-                        className="w-8 h-8 rounded-full mx-auto mb-1 flex items-center justify-center text-white text-xs font-bold"
+                        className="w-8 h-8 rounded-lg mx-auto mb-1 flex items-center justify-center"
                         style={{
-                          backgroundColor: hConfig?.color || "#888",
+                          backgroundColor: (hConfig?.color || "#888") + "15",
                         }}
                       >
-                        {hConfig?.initials || h2h.displayName[0]}
+                        <ProviderIcon provider={hConfig?.provider || ""} size={16} color={hConfig?.color} />
                       </div>
                       <p className="text-xs font-medium">{h2h.displayName}</p>
                       <p className="text-lg font-mono font-bold">
