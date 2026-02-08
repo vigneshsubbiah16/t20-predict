@@ -120,6 +120,35 @@ export async function getMatchFromDb(id: string): Promise<MatchWithPredictions |
   } as MatchWithPredictions;
 }
 
+export async function getAdjacentMatches(
+  scheduledAt: string,
+  matchNumber: number
+): Promise<{ prev: Match | null; next: Match | null }> {
+  const [prevRows, nextRows] = await Promise.all([
+    db
+      .select()
+      .from(matches)
+      .where(
+        sql`${matches.scheduledAt} < ${scheduledAt} OR (${matches.scheduledAt} = ${scheduledAt} AND ${matches.matchNumber} < ${matchNumber})`
+      )
+      .orderBy(desc(matches.scheduledAt), desc(matches.matchNumber))
+      .limit(1),
+    db
+      .select()
+      .from(matches)
+      .where(
+        sql`${matches.scheduledAt} > ${scheduledAt} OR (${matches.scheduledAt} = ${scheduledAt} AND ${matches.matchNumber} > ${matchNumber})`
+      )
+      .orderBy(asc(matches.scheduledAt), asc(matches.matchNumber))
+      .limit(1),
+  ]);
+
+  return {
+    prev: prevRows[0] ? { ...prevRows[0], predictionCount: 0 } : null,
+    next: nextRows[0] ? { ...nextRows[0], predictionCount: 0 } : null,
+  };
+}
+
 // ============ LEADERBOARD ============
 
 export async function getLeaderboardFromDb(sort?: string): Promise<LeaderboardEntry[]> {

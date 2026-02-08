@@ -224,6 +224,7 @@ export async function callAgent(
     modelId: agent.modelId,
     slug: agent.slug,
     color: agent.color,
+    initials: agent.displayName.slice(0, 2),
     tailwindColor: "",
     tailwindBg: "",
     tailwindBorder: "",
