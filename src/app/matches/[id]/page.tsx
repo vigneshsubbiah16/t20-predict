@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getMatchFromDb } from "@/lib/data";
 import { PredictionBattle } from "@/components/PredictionBattle";
@@ -7,6 +8,39 @@ import { ShareMatchButton } from "@/components/ShareButton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, MapPin } from "lucide-react";
+import { LocalDateTime } from "@/components/LocalDateTime";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const match = await getMatchFromDb(id);
+  if (!match) return { title: "Match Not Found - T20 Predict" };
+
+  const latestPreds = match.predictions.filter((p) => p.isLatest);
+  let description: string;
+  if (match.status === "completed" && match.winnerTeamName) {
+    const correct = latestPreds.filter((p) => p.predictedWinner === match.winner).length;
+    description = `${match.winnerTeamName} won! ${correct}/${latestPreds.length} AIs predicted correctly.`;
+  } else if (latestPreds.length > 0) {
+    const teamAPicks = latestPreds.filter((p) => p.predictedWinner === "team_a").length;
+    const teamBPicks = latestPreds.length - teamAPicks;
+    description = `AI vote split: ${match.teamA} ${teamAPicks} - ${teamBPicks} ${match.teamB}. See full analysis.`;
+  } else {
+    description = `AI predictions for ${match.teamA} vs ${match.teamB} in the T20 World Cup 2026.`;
+  }
+
+  return {
+    title: `${match.teamA} vs ${match.teamB} - T20 Predict`,
+    description,
+    openGraph: {
+      title: `${match.teamA} vs ${match.teamB} - T20 Predict`,
+      description,
+    },
+  };
+}
 
 export default async function MatchDetailPage({
   params,
@@ -16,7 +50,6 @@ export default async function MatchDetailPage({
   const { id } = await params;
   const match = await getMatchFromDb(id);
   if (!match) notFound();
-  const date = new Date(match.scheduledAt);
   const latestPredictions = match.predictions.filter((p) => p.isLatest);
   const priorPredictions = match.predictions.filter((p) => !p.isLatest);
 
@@ -55,17 +88,7 @@ export default async function MatchDetailPage({
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              {date.toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}{" "}
-              at{" "}
-              {date.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              <LocalDateTime dateString={match.scheduledAt} format="long" />
             </span>
             <span className="flex items-center gap-1">
               <MapPin className="w-4 h-4" />

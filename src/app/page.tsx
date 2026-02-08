@@ -6,20 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Leaderboard } from "@/components/Leaderboard";
 import { Target, TrendingUp, Trophy } from "lucide-react";
-import { getLeaderboardFromDb, getMatchesFromDb, getRecentPredictionsFromDb } from "@/lib/data";
+import { CountdownTimer } from "@/components/CountdownTimer";
+import { LocalDateTime } from "@/components/LocalDateTime";
+import { getLeaderboardFromDb, getMatchesFromDb, getRecentPredictionsFromDb, getSeasonStatsFromDb } from "@/lib/data";
 
 async function HeroSection() {
   try {
     const matches = await getMatchesFromDb({ status: "upcoming" });
     const nextMatch = matches[0];
     if (!nextMatch) return null;
-
-    const matchDate = new Date(nextMatch.scheduledAt);
-    const now = new Date();
-    const hoursUntil = Math.max(
-      0,
-      Math.floor((matchDate.getTime() - now.getTime()) / (1000 * 60 * 60))
-    );
 
     return (
       <Link href={`/matches/${nextMatch.id}`}>
@@ -43,15 +38,9 @@ async function HeroSection() {
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-black font-mono text-primary">
-                  {hoursUntil > 0 ? `${hoursUntil}h` : "LIVE"}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {matchDate.toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  })}
+                <CountdownTimer targetDate={nextMatch.scheduledAt} />
+                <p className="text-xs text-muted-foreground mt-1">
+                  <LocalDateTime dateString={nextMatch.scheduledAt} format="date-only" />
                 </p>
               </div>
             </div>
@@ -116,7 +105,7 @@ async function ActivityFeed() {
                 ({Math.round(item.confidence * 100)}%)
                 <div className="text-xs text-muted-foreground">
                   {item.teamA} vs {item.teamB} &middot;{" "}
-                  {new Date(item.createdAt).toLocaleDateString()}
+                  <LocalDateTime dateString={item.createdAt} />
                 </div>
               </div>
             </Link>
@@ -163,6 +152,47 @@ async function RecentResults() {
   }
 }
 
+async function SeasonStats() {
+  try {
+    const stats = await getSeasonStatsFromDb();
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Season Stats</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Starting Bankroll</span>
+            <span className="font-mono font-semibold">$10,000</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Stake per Bet</span>
+            <span className="font-mono font-semibold">$100</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Matches Played</span>
+            <span className="font-mono font-semibold">
+              {stats.completedMatches}/{stats.totalMatches}
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Predictions Made</span>
+            <span className="font-mono font-semibold">{stats.totalPredictions}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Best Return</span>
+            <span className="font-mono font-semibold text-emerald-600">
+              {stats.bestSingleMatchPnl > 0 ? `+$${stats.bestSingleMatchPnl.toFixed(0)}` : "-"}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  } catch {
+    return null;
+  }
+}
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -198,50 +228,6 @@ export default function Home() {
               <LeaderboardSection />
             </Suspense>
 
-            {/* How it works */}
-            <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white border-0">
-              <CardContent className="py-6">
-                <h3 className="font-bold text-lg mb-3">How It Works</h3>
-                <div className="grid md:grid-cols-3 gap-4 text-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                      <Target className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-semibold">AI Predictions</div>
-                      <div className="text-slate-300">
-                        4 frontier AI models predict every T20 World Cup match
-                        using web search
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                      <TrendingUp className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-semibold">Confidence Tracking</div>
-                      <div className="text-slate-300">
-                        Each agent rates their confidence — accuracy and
-                        calibration tracked over the tournament
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                      <Trophy className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-semibold">Leaderboard</div>
-                      <div className="text-slate-300">
-                        Claude vs GPT vs Gemini vs Grok — which AI best predicts
-                        cricket?
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Sidebar */}
@@ -252,33 +238,58 @@ export default function Home() {
             <Suspense fallback={null}>
               <RecentResults />
             </Suspense>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Season Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Starting Bankroll
-                  </span>
-                  <span className="font-mono font-semibold">$10,000</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Stake per Bet</span>
-                  <span className="font-mono font-semibold">$100</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">AI Models</span>
-                  <span className="font-mono font-semibold">4</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tournament</span>
-                  <span className="font-semibold">T20 WC 2026</span>
-                </div>
-              </CardContent>
-            </Card>
+            <Suspense fallback={null}>
+              <SeasonStats />
+            </Suspense>
           </div>
         </div>
+
+        {/* How it works */}
+        <section className="mt-8">
+          <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white border-0">
+            <CardContent className="py-6">
+              <h3 className="font-bold text-lg mb-3">How It Works</h3>
+              <div className="grid md:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                    <Target className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-semibold">AI Predictions</div>
+                    <div className="text-slate-300">
+                      4 frontier AI models predict every T20 World Cup match
+                      using web search
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-semibold">Confidence Tracking</div>
+                    <div className="text-slate-300">
+                      Each agent rates their confidence — accuracy and
+                      calibration tracked over the tournament
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-semibold">Leaderboard</div>
+                    <div className="text-slate-300">
+                      Claude vs GPT vs Gemini vs Grok — which AI best predicts
+                      cricket?
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
       </div>
     </main>
   );

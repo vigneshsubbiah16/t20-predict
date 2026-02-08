@@ -63,7 +63,7 @@ export default function RootLayout({
                     Matches
                   </Button>
                 </Link>
-                <Link href="/agents/claude">
+                <Link href="/agents">
                   <Button variant="ghost" size="sm">
                     Agents
                   </Button>
@@ -87,7 +87,7 @@ export default function RootLayout({
                 <Link href="/matches" className="hover:text-foreground">
                   All Matches
                 </Link>
-                <Link href="/agents/claude" className="hover:text-foreground">
+                <Link href="/agents" className="hover:text-foreground">
                   Agents
                 </Link>
               </div>

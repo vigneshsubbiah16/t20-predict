@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Prediction } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Check, X, ChevronDown, ChevronUp, Search } from "lucide-react";
-import { AGENT_CONFIGS, getAgentConfig } from "@/lib/agents-config";
+import { getAgentConfig } from "@/lib/agents-config";
 
 interface PredictionBattleProps {
   predictions: Prediction[];
@@ -39,29 +39,29 @@ export function PredictionBattle({
           </div>
           <div className="flex h-8 rounded-full overflow-hidden border">
             <div
-              className="bg-blue-500 flex items-center justify-center text-white text-xs font-bold transition-all"
+              className="bg-blue-500 flex items-center justify-center text-white text-xs font-bold transition-all overflow-hidden"
               style={{
                 width: `${(teamAPicks / totalPicks) * 100}%`,
-                minWidth: teamAPicks > 0 ? "2rem" : "0",
+                minWidth: teamAPicks > 0 ? "3rem" : "0",
               }}
             >
-              {teamAPicks}
+              <span className="truncate px-1">{teamA} {teamAPicks}</span>
             </div>
             <div
-              className="bg-amber-500 flex items-center justify-center text-white text-xs font-bold transition-all"
+              className="bg-amber-500 flex items-center justify-center text-white text-xs font-bold transition-all overflow-hidden"
               style={{
                 width: `${(teamBPicks / totalPicks) * 100}%`,
-                minWidth: teamBPicks > 0 ? "2rem" : "0",
+                minWidth: teamBPicks > 0 ? "3rem" : "0",
               }}
             >
-              {teamBPicks}
+              <span className="truncate px-1">{teamB} {teamBPicks}</span>
             </div>
           </div>
         </div>
       )}
 
       {/* Prediction cards grid */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {sorted.map((prediction) => (
           <PredictionCard
             key={prediction.id}
@@ -94,26 +94,34 @@ function PredictionCard({
   winner?: string | null;
 }) {
   const [showSearch, setShowSearch] = useState(false);
+  const [reasoningExpanded, setReasoningExpanded] = useState(false);
   const config = getAgentConfig(prediction.agentId);
   const pickedTeam =
     prediction.predictedWinner === "team_a" ? teamA : teamB;
   const isCorrect =
     winner != null ? prediction.predictedWinner === winner : null;
 
-  const searchQueries: string[] = prediction.searchQueries
-    ? JSON.parse(prediction.searchQueries)
-    : [];
+  let searchQueries: string[] = [];
+  if (prediction.searchQueries) {
+    try {
+      searchQueries = JSON.parse(prediction.searchQueries);
+    } catch {
+      // malformed JSON — fall back to empty array
+    }
+  }
 
   return (
     <div
       className={cn(
-        "relative rounded-xl border-2 p-4 transition-all",
+        "relative rounded-xl border-2 overflow-hidden transition-all",
         config?.tailwindBg || "bg-gray-50",
         config?.tailwindBorder || "border-gray-200",
         isCorrect === true && "ring-2 ring-green-500 ring-offset-2",
         isCorrect === false && "opacity-60"
       )}
     >
+      <div className="h-1.5 rounded-t-xl" style={{ backgroundColor: config?.color }} />
+      <div className="p-4">
       {/* Result badge */}
       {isCorrect !== null && (
         <div
@@ -163,37 +171,56 @@ function PredictionCard({
 
       {/* Reasoning */}
       {prediction.reasoning && (
-        <p className="mt-2 text-xs text-muted-foreground line-clamp-3">
-          {prediction.reasoning}
-        </p>
+        <div className="mt-2">
+          <p
+            className={cn(
+              "text-xs text-muted-foreground",
+              !reasoningExpanded && "line-clamp-3"
+            )}
+          >
+            {prediction.reasoning}
+          </p>
+          <button
+            onClick={() => setReasoningExpanded(!reasoningExpanded)}
+            className="text-xs font-medium text-primary hover:underline mt-1"
+          >
+            {reasoningExpanded ? "Show less" : "Read more"}
+          </button>
+        </div>
       )}
 
       {/* Search queries */}
       {searchQueries.length > 0 && (
-        <div className="mt-2">
+        <div className="mt-3">
           <button
             onClick={() => setShowSearch(!showSearch)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            className="flex items-center gap-2 w-full rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground hover:bg-muted/50 transition-colors"
           >
-            <Search className="w-3 h-3" />
-            What they researched
+            <Search className="w-3.5 h-3.5 shrink-0" />
+            <span className="flex-1 text-left">
+              {showSearch ? "Hide research" : `Researched ${searchQueries.length} topics`}
+            </span>
             {showSearch ? (
-              <ChevronUp className="w-3 h-3" />
+              <ChevronUp className="w-3.5 h-3.5 shrink-0" />
             ) : (
-              <ChevronDown className="w-3 h-3" />
+              <ChevronDown className="w-3.5 h-3.5 shrink-0" />
             )}
           </button>
           {showSearch && (
-            <ul className="mt-1 space-y-0.5">
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {searchQueries.map((q, i) => (
-                <li key={i} className="text-xs text-muted-foreground pl-4">
-                  &ldquo;{q}&rdquo;
-                </li>
+                <span
+                  key={i}
+                  className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"
+                >
+                  {q}
+                </span>
               ))}
-            </ul>
+            </div>
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

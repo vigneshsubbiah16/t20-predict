@@ -13,15 +13,21 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { LeaderboardEntry } from "@/lib/api";
+import { formatStreak } from "@/lib/utils";
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[];
 }
 
+const RANK_MEDALS: Record<number, string> = {
+  1: "\u{1F947}",
+  2: "\u{1F948}",
+  3: "\u{1F949}",
+};
+
 function getRankBadge(rank: number): React.ReactNode {
-  if (rank === 1) return <span className="text-xl">1st</span>;
-  if (rank === 2) return <span className="text-xl">2nd</span>;
-  if (rank === 3) return <span className="text-xl">3rd</span>;
+  const medal = RANK_MEDALS[rank];
+  if (medal) return <span className="text-xl">{medal}</span>;
   return <span className="text-muted-foreground font-mono">#{rank}</span>;
 }
 
@@ -126,8 +132,7 @@ export function Leaderboard({ entries }: LeaderboardProps) {
                     entry.totalPnl >= 0 ? "text-emerald-600" : "text-red-600"
                   }`}
                 >
-                  {entry.totalPnl >= 0 ? "+" : ""}$
-                  {Math.abs(entry.totalPnl).toFixed(0)}
+                  {entry.totalPnl >= 0 ? "+" : ""}${Math.abs(entry.totalPnl).toFixed(0)}
                 </TableCell>
                 <TableCell className="text-right font-mono">
                   {entry.totalPredictions > 0
@@ -135,11 +140,7 @@ export function Leaderboard({ entries }: LeaderboardProps) {
                     : "-"}
                 </TableCell>
                 <TableCell className="text-right font-mono">
-                  {entry.currentStreak > 0
-                    ? `W${entry.currentStreak}`
-                    : entry.currentStreak < 0
-                    ? `L${Math.abs(entry.currentStreak)}`
-                    : "-"}
+                  {formatStreak(entry.currentStreak)}
                 </TableCell>
               </TableRow>
             ))}

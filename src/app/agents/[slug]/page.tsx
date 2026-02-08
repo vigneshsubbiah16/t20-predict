@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAgentProfileFromDb } from "@/lib/data";
 import { getAgentConfig } from "@/lib/agents-config";
-import { STARTING_BANKROLL } from "@/lib/scoring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -16,6 +16,33 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Check, X } from "lucide-react";
+import { formatStreak } from "@/lib/utils";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const profile = await getAgentProfileFromDb(slug);
+  if (!profile) return { title: "Agent Not Found - T20 Predict" };
+
+  const accuracy =
+    profile.stats.totalPredictions > 0
+      ? `${Math.round(profile.stats.accuracy * 100)}%`
+      : "N/A";
+  const pnl = `${profile.stats.totalPnl >= 0 ? "+" : ""}$${Math.abs(profile.stats.totalPnl).toFixed(0)}`;
+  const description = `${profile.displayName} (${profile.provider}): ${profile.stats.points} pts, ${accuracy} accuracy, ${pnl} P&L. Track their T20 World Cup predictions.`;
+
+  return {
+    title: `${profile.displayName} - T20 Predict`,
+    description,
+    openGraph: {
+      title: `${profile.displayName} - T20 Predict`,
+      description,
+    },
+  };
+}
 
 export default async function AgentProfilePage({
   params,
@@ -100,21 +127,11 @@ export default async function AgentProfilePage({
           />
           <StatCard
             label="Current Streak"
-            value={
-              profile.stats.currentStreak > 0
-                ? `W${profile.stats.currentStreak}`
-                : profile.stats.currentStreak < 0
-                ? `L${Math.abs(profile.stats.currentStreak)}`
-                : "-"
-            }
+            value={formatStreak(profile.stats.currentStreak)}
           />
           <StatCard
             label="Best Streak"
-            value={
-              profile.stats.bestStreak > 0
-                ? `W${profile.stats.bestStreak}`
-                : "-"
-            }
+            value={formatStreak(profile.stats.bestStreak)}
           />
           <StatCard
             label="Predictions"
@@ -228,19 +245,9 @@ export default async function AgentProfilePage({
                           )}
                         </TableCell>
                         <TableCell
-                          className={`text-right font-mono text-sm ${
-                            pred.pnl != null
-                              ? pred.pnl >= 0
-                                ? "text-emerald-600"
-                                : "text-red-600"
-                              : ""
-                          }`}
+                          className={`text-right font-mono text-sm ${pnlColorClass(pred.pnl)}`}
                         >
-                          {pred.pnl != null
-                            ? `${pred.pnl >= 0 ? "+" : ""}$${Math.abs(
-                                pred.pnl
-                              ).toFixed(0)}`
-                            : "-"}
+                          {formatPnl(pred.pnl)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -253,6 +260,17 @@ export default async function AgentProfilePage({
       </div>
     </main>
   );
+}
+
+function formatPnl(pnl: number | null): string {
+  if (pnl == null) return "-";
+  const sign = pnl >= 0 ? "+" : "";
+  return `${sign}$${Math.abs(pnl).toFixed(0)}`;
+}
+
+function pnlColorClass(pnl: number | null): string {
+  if (pnl == null) return "";
+  return pnl >= 0 ? "text-emerald-600" : "text-red-600";
 }
 
 function StatCard({
