@@ -2,7 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { predictions, predictionLogs, matches, agents } from "@/db/schema";
-import type { AgentConfig } from "@/lib/agents-config";
+import { type AgentConfig, getAgentConfig } from "@/lib/agents-config";
 import { buildPredictionPrompt } from "./prompt";
 import { callAnthropic } from "./anthropic";
 import { callOpenAI } from "./openai";
@@ -217,7 +217,8 @@ export async function callAgent(
   match: Match,
   agent: Agent,
 ): Promise<OrchestrationResult> {
-  const config: AgentConfig = {
+  const knownConfig = getAgentConfig(agent.id);
+  const config: AgentConfig = knownConfig ?? {
     id: agent.id,
     displayName: agent.displayName,
     provider: agent.provider,

@@ -167,6 +167,10 @@ export default async function MatchDetailPage({
                 </p>
               </CardContent>
             </Card>
+          ) : latestPredictions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No predictions were made for this match.
+            </div>
           ) : (
             <PredictionBattle
               predictions={latestPredictions}
