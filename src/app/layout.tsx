@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
-import { Button } from "@/components/ui/button";
+import { NavLinks } from "@/components/NavLinks";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,23 +52,7 @@ export default function RootLayout({
                   </p>
                 </div>
               </Link>
-              <nav className="flex items-center gap-1">
-                <Link href="/">
-                  <Button variant="ghost" size="sm">
-                    Home
-                  </Button>
-                </Link>
-                <Link href="/matches">
-                  <Button variant="ghost" size="sm">
-                    Matches
-                  </Button>
-                </Link>
-                <Link href="/agents">
-                  <Button variant="ghost" size="sm">
-                    Agents
-                  </Button>
-                </Link>
-              </nav>
+              <NavLinks />
             </div>
           </div>
         </header>
@@ -77,12 +61,14 @@ export default function RootLayout({
 
         {/* Footer */}
         <footer className="border-t mt-12 bg-slate-50">
-          <div className="container mx-auto px-4 py-6">
+          <div className="container mx-auto px-4 py-6 space-y-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-              <p>
-                T20 Predict — 4 AI models battle to predict the T20 World Cup
-                2026.
-              </p>
+              <div>
+                <p className="font-medium text-foreground">T20 Predict</p>
+                <p className="text-xs mt-0.5">
+                  ICC Men&apos;s T20 World Cup 2026 &middot; Feb 17 – Mar 22, 2026 &middot; India & Sri Lanka
+                </p>
+              </div>
               <div className="flex items-center gap-4">
                 <Link href="/matches" className="hover:text-foreground">
                   All Matches
@@ -91,6 +77,14 @@ export default function RootLayout({
                   Agents
                 </Link>
               </div>
+            </div>
+            <div className="border-t pt-4 text-xs text-muted-foreground text-center space-y-1">
+              <p>
+                Predictions by Claude Opus 4.6, GPT-5.2, Gemini 3 Pro & Grok 4
+              </p>
+              <p>
+                For entertainment purposes only. AI predictions are experimental.
+              </p>
             </div>
           </div>
         </footer>

@@ -9,6 +9,7 @@ import { Target, TrendingUp, Trophy } from "lucide-react";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { getLeaderboardFromDb, getMatchesFromDb, getRecentPredictionsFromDb, getSeasonStatsFromDb } from "@/lib/data";
+import { formatMatchLabel } from "@/lib/utils";
 
 async function HeroSection() {
   try {
@@ -30,11 +31,8 @@ async function HeroSection() {
                   {nextMatch.teamA} vs {nextMatch.teamB}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Match #{nextMatch.matchNumber} &middot;{" "}
-                  {nextMatch.stage === "group"
-                    ? `Group ${nextMatch.groupName}`
-                    : nextMatch.stage}{" "}
-                  &middot; {nextMatch.venue}
+                  {formatMatchLabel(nextMatch.stage, nextMatch.groupName)} &middot;{" "}
+                  {nextMatch.venue}
                 </p>
               </div>
               <div className="text-right">

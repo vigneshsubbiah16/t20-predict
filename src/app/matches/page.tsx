@@ -5,9 +5,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getMatchesFromDb } from "@/lib/data";
 import { LocalDateTime } from "@/components/LocalDateTime";
+import { formatMatchLabel } from "@/lib/utils";
 
 export default async function MatchesPage() {
   const allMatches = await getMatchesFromDb();
+
+  // Today's matches (UTC date comparison)
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayMatches = allMatches.filter(
+    (m) => m.scheduledAt.slice(0, 10) === todayStr
+  );
 
   // Group by stage
   const stages = [
@@ -25,6 +32,23 @@ export default async function MatchesPage() {
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-black mb-8">All Matches</h1>
+
+        {/* Today's Matches */}
+        {todayMatches.length > 0 && (
+          <section className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-xl font-bold">Today&apos;s Matches</h2>
+              <Badge className="bg-orange-100 text-orange-700 border-orange-200">
+                {todayMatches.length} {todayMatches.length === 1 ? "match" : "matches"}
+              </Badge>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {todayMatches.map((match) => (
+                <MatchCard key={`today-${match.id}`} match={match} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Group Stage */}
         <section className="mb-10">
@@ -85,7 +109,7 @@ function MatchCard({
         <CardContent className="py-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-muted-foreground">
-              #{match.matchNumber} &middot;{" "}
+              {formatMatchLabel(match.stage, match.groupName)} &middot;{" "}
               <LocalDateTime dateString={match.scheduledAt} format="date-only" />
             </span>
             {isCompleted && (

@@ -2,13 +2,16 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getMatchFromDb } from "@/lib/data";
+import Link from "next/link";
+import { getMatchFromDb, getAdjacentMatches } from "@/lib/data";
 import { PredictionBattle } from "@/components/PredictionBattle";
 import { ShareMatchButton } from "@/components/ShareButton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { LocalDateTime } from "@/components/LocalDateTime";
+import { CountdownTimer } from "@/components/CountdownTimer";
+import { formatMatchLabel } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -52,6 +55,7 @@ export default async function MatchDetailPage({
   if (!match) notFound();
   const latestPredictions = match.predictions.filter((p) => p.isLatest);
   const priorPredictions = match.predictions.filter((p) => !p.isLatest);
+  const adjacent = await getAdjacentMatches(match.scheduledAt, match.matchNumber);
 
   // Parse playing XI
   const xiA: string[] = match.playingXiA
@@ -68,11 +72,8 @@ export default async function MatchDetailPage({
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="outline">
-              {match.stage === "group"
-                ? `Group ${match.groupName}`
-                : match.stage}
+              {formatMatchLabel(match.stage, match.groupName)}
             </Badge>
-            <Badge variant="outline">Match #{match.matchNumber}</Badge>
             {match.status === "completed" && (
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                 Completed
@@ -151,12 +152,33 @@ export default async function MatchDetailPage({
               />
             )}
           </div>
-          <PredictionBattle
-            predictions={latestPredictions}
-            teamA={match.teamA}
-            teamB={match.teamB}
-            winner={match.winner}
-          />
+          {latestPredictions.length === 0 && match.status === "upcoming" ? (
+            <Card className="border-dashed border-2">
+              <CardContent className="py-8 text-center">
+                <div className="mb-4">
+                  <CountdownTimer targetDate={match.scheduledAt} />
+                </div>
+                <div className="flex items-center justify-center gap-2 text-muted-foreground mb-2">
+                  <Clock className="w-4 h-4" />
+                  <span className="font-medium">Predictions arriving soon</span>
+                </div>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  AI agents submit predictions up to 48 hours before each match. Check back closer to match time.
+                </p>
+              </CardContent>
+            </Card>
+          ) : latestPredictions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No predictions were made for this match.
+            </div>
+          ) : (
+            <PredictionBattle
+              predictions={latestPredictions}
+              teamA={match.teamA}
+              teamB={match.teamB}
+              winner={match.winner}
+            />
+          )}
         </section>
 
         {/* Prior predictions (if post_xi replaced pre_match) */}
@@ -210,6 +232,38 @@ export default async function MatchDetailPage({
             </div>
           </section>
         )}
+
+        {/* Prev/Next Navigation */}
+        <nav className="flex items-center justify-between pt-4 border-t">
+          {adjacent.prev ? (
+            <Link
+              href={`/matches/${adjacent.prev.id}`}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>{adjacent.prev.teamA} vs {adjacent.prev.teamB}</span>
+            </Link>
+          ) : (
+            <div />
+          )}
+          <Link
+            href="/matches"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            All Matches
+          </Link>
+          {adjacent.next ? (
+            <Link
+              href={`/matches/${adjacent.next.id}`}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span>{adjacent.next.teamA} vs {adjacent.next.teamB}</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          ) : (
+            <div />
+          )}
+        </nav>
       </div>
     </main>
   );

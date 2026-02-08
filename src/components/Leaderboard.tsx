@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { LeaderboardEntry } from "@/lib/api";
-import { formatStreak } from "@/lib/utils";
+import { formatStreak, formatPnl, pnlColorClass } from "@/lib/utils";
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[];
@@ -93,8 +93,8 @@ export function Leaderboard({ entries }: LeaderboardProps) {
               <TableHead className="text-right">Pts</TableHead>
               <TableHead className="text-right">Accuracy</TableHead>
               <TableHead className="text-right">P&L</TableHead>
-              <TableHead className="text-right">Brier</TableHead>
-              <TableHead className="text-right">Streak</TableHead>
+              <TableHead className="text-right hidden sm:table-cell">Brier</TableHead>
+              <TableHead className="text-right hidden sm:table-cell">Streak</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -128,18 +128,16 @@ export function Leaderboard({ entries }: LeaderboardProps) {
                     : "-"}
                 </TableCell>
                 <TableCell
-                  className={`text-right font-mono font-semibold ${
-                    entry.totalPnl >= 0 ? "text-emerald-600" : "text-red-600"
-                  }`}
+                  className={`text-right font-mono font-semibold ${pnlColorClass(entry.totalPnl)}`}
                 >
-                  {entry.totalPnl >= 0 ? "+" : ""}${Math.abs(entry.totalPnl).toFixed(0)}
+                  {formatPnl(entry.totalPnl)}
                 </TableCell>
-                <TableCell className="text-right font-mono">
+                <TableCell className="text-right font-mono hidden sm:table-cell">
                   {entry.totalPredictions > 0
                     ? entry.avgBrier.toFixed(3)
                     : "-"}
                 </TableCell>
-                <TableCell className="text-right font-mono">
+                <TableCell className="text-right font-mono hidden sm:table-cell">
                   {formatStreak(entry.currentStreak)}
                 </TableCell>
               </TableRow>
