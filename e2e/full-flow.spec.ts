@@ -343,17 +343,18 @@ test.describe("Security — Auth & Input Validation", () => {
   });
 
   // Error responses must not leak internals
-  test("500 errors return generic message, not stack traces", async ({ request }) => {
+  test("Error responses do not leak internal details", async ({ request }) => {
+    // Send invalid JSON body to trigger error handling
     const res = await request.post("/api/admin/manual-settle", {
       headers: { ...AUTH_HEADER, "Content-Type": "application/json" },
       data: {},
     });
-    if (res.status() === 500) {
-      const body = await res.json();
-      expect(body.error).toBe("Internal server error");
-      expect(body.error).not.toContain("at ");
-      expect(body.error).not.toContain("Error:");
-    }
+    const body = await res.json();
+    // Whether 400 or 500, error messages should never contain stack traces
+    expect(body.error).toBeDefined();
+    expect(body.error).not.toContain("at ");
+    expect(body.error).not.toContain("/src/");
+    expect(body.error).not.toContain("node_modules");
   });
 
   // Input validation on public endpoints

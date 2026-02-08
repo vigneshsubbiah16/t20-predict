@@ -1,3 +1,3 @@
 export function isValidEspnId(espnId: string): boolean {
-  return /^\d+$/.test(espnId);
+  return /^\d{1,10}$/.test(espnId);
 }

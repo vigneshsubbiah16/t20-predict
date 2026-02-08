@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { timingSafeEqual } from "crypto";
+import { timingSafeEqual, createHmac } from "crypto";
 
 export function verifyCronSecret(request: NextRequest): boolean {
   const envSecret = process.env.CRON_SECRET;
@@ -12,12 +12,7 @@ export function verifyCronSecret(request: NextRequest): boolean {
     return false;
   }
 
-  const a = Buffer.from(provided);
-  const b = Buffer.from(envSecret);
-  if (a.length !== b.length) {
-    timingSafeEqual(b, b);
-    return false;
-  }
-
+  const a = createHmac("sha256", envSecret).update(provided).digest();
+  const b = createHmac("sha256", envSecret).update(envSecret).digest();
   return timingSafeEqual(a, b);
 }
