@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { predictions, agents } from "@/db/schema";
-import { eq, and, isNotNull, asc, desc } from "drizzle-orm";
+import { eq, and, isNotNull, asc } from "drizzle-orm";
 import { STARTING_BANKROLL } from "@/lib/scoring";
 
 interface AgentLeaderboardEntry {
@@ -45,6 +45,11 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const sort = searchParams.get("sort") || "points";
+
+    const VALID_SORTS = ["points", "brier", "pnl"];
+    if (!VALID_SORTS.includes(sort)) {
+      return NextResponse.json({ error: "Invalid sort parameter" }, { status: 400 });
+    }
 
     const allAgents = await db.select().from(agents).where(eq(agents.isActive, true));
 

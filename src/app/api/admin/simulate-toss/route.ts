@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { matches } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 /**
  * POST /api/admin/simulate-toss
@@ -9,8 +10,7 @@ import { eq } from "drizzle-orm";
  * Body: { matchId, tossWinner (team name), tossDecision, playingXiA, playingXiB }
  */
 export async function POST(request: NextRequest) {
-  const secret = request.headers.get("authorization")?.replace("Bearer ", "");
-  if (secret !== process.env.CRON_SECRET) {
+  if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -56,6 +56,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Simulate toss error:", error);
-    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }

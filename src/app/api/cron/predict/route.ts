@@ -87,9 +87,11 @@ export async function GET(request: NextRequest) {
         if (agentResults[i].status === "fulfilled") {
           predictionsCreated++;
         } else {
-          const reason = String((agentResults[i] as PromiseRejectedResult).reason);
-          errors.push(`${agentsToCall[i].displayName}: ${reason}`);
-          console.error(`Failed: ${agentsToCall[i].displayName} for ${match.id}:`, reason);
+          console.error(
+            `Failed: ${agentsToCall[i].displayName} for ${match.id}:`,
+            (agentResults[i] as PromiseRejectedResult).reason
+          );
+          errors.push(`${agentsToCall[i].displayName}: Prediction failed`);
         }
       }
 
@@ -113,7 +115,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Cron predict error:", error);
     return NextResponse.json(
-      { success: false, error: String(error) },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }

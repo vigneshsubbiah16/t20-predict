@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { matches, predictions, agents } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 export const maxDuration = 120;
 
@@ -11,8 +12,7 @@ export const maxDuration = 120;
  * Body: { matchId, agentIds? (optional — defaults to all active agents) }
  */
 export async function POST(request: NextRequest) {
-  const secret = request.headers.get("authorization")?.replace("Bearer ", "");
-  if (secret !== process.env.CRON_SECRET) {
+  if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       status: r.status,
       ...(r.status === "fulfilled"
         ? { prediction: r.value }
-        : { error: String(r.reason) }),
+        : { error: "Prediction failed" }),
     }));
 
     return NextResponse.json({
@@ -80,6 +80,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Trigger predict error:", error);
-    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }

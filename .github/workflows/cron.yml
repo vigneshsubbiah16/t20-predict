@@ -11,51 +11,51 @@ jobs:
     steps:
       - name: Claude Opus prediction
         run: |
-          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=claude-opus" \
+          curl -sf -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=claude-opus" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 90 || true
+            --max-time 90
 
   predict-gpt:
     runs-on: ubuntu-latest
     steps:
       - name: GPT prediction
         run: |
-          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=gpt-5" \
+          curl -sf -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=gpt-5" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 90 || true
+            --max-time 90
 
   predict-gemini:
     runs-on: ubuntu-latest
     steps:
       - name: Gemini prediction
         run: |
-          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=gemini-3" \
+          curl -sf -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=gemini-3" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 90 || true
+            --max-time 90
 
   predict-grok:
     runs-on: ubuntu-latest
     steps:
       - name: Grok prediction
         run: |
-          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=grok" \
+          curl -sf -X GET "${{ secrets.APP_URL }}/api/cron/predict?agentId=grok" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 90 || true
+            --max-time 90
 
   check-results:
     runs-on: ubuntu-latest
     steps:
       - name: Check and settle completed matches
         run: |
-          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/results" \
+          curl -sf -X GET "${{ secrets.APP_URL }}/api/cron/results" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 90 || true
+            --max-time 90
 
   check-team-news:
     runs-on: ubuntu-latest
     steps:
       - name: Check for playing XI / toss announcements
         run: |
-          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/team-news" \
+          curl -sf -X GET "${{ secrets.APP_URL }}/api/cron/team-news" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 90 || true
+            --max-time 90

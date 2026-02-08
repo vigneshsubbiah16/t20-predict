@@ -4,6 +4,7 @@ import { matches } from "@/db/schema";
 import { eq, and, lte, gte, isNull } from "drizzle-orm";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { searchTeamNews } from "@/lib/cricket-search";
+import { isValidEspnId } from "@/lib/validation";
 
 export const maxDuration = 60;
 
@@ -84,9 +85,13 @@ export async function GET(request: NextRequest) {
         tossDecision: string | null;
       } | null = null;
 
-      if (match.espnId) {
+      if (match.espnId && isValidEspnId(match.espnId)) {
         xiData = await fetchPlayingXI(match.espnId);
-      } else {
+      } else if (match.espnId) {
+        console.error(`Invalid espnId for match ${match.id}: ${match.espnId}`);
+      }
+
+      if (!xiData) {
         const aiResult = await searchTeamNews(
           match.teamA,
           match.teamB,
@@ -129,7 +134,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Cron team-news error:", error);
     return NextResponse.json(
-      { success: false, error: String(error) },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }

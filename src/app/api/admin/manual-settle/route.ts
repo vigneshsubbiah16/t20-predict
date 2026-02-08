@@ -3,10 +3,10 @@ import { db } from "@/db";
 import { matches, predictions } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { calculatePnl, calculateBrierScore } from "@/lib/scoring";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 export async function POST(request: NextRequest) {
-  const secret = request.headers.get("authorization")?.replace("Bearer ", "");
-  if (secret !== process.env.CRON_SECRET) {
+  if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Manual settle error:", error);
     return NextResponse.json(
-      { success: false, error: String(error) },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
