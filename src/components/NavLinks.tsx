@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Home" },
   { href: "/matches", label: "Matches" },
   { href: "/agents", label: "Agents" },
+  { href: "/how-it-works", label: "How It Works" },
 ];
 
 export function NavLinks() {
