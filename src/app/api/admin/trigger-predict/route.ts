@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
     }
 
     const m = match[0];
-    const hasXi = m.playingXiA && m.playingXiB;
-    const window = hasXi ? "post_xi" : "pre_match";
+    const hasTossOrXi = m.tossWinner || (m.playingXiA && m.playingXiB);
+    const window = hasTossOrXi ? "post_xi" : "pre_match";
 
     // If post_xi, mark previous pre_match predictions as not latest
     if (window === "post_xi") {

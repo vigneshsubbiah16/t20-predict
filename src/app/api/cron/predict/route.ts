@@ -58,8 +58,8 @@ export async function GET(request: NextRequest) {
 
     // Find the first match that still needs predictions from this agent
     for (const match of upcomingMatches) {
-      const hasXi = match.playingXiA && match.playingXiB;
-      const window = hasXi ? "post_xi" : "pre_match";
+      const hasTossOrXi = match.tossWinner || (match.playingXiA && match.playingXiB);
+      const window = hasTossOrXi ? "post_xi" : "pre_match";
 
       const existingPreds = await db
         .select({ agentId: predictions.agentId })

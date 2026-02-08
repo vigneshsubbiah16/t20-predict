@@ -54,7 +54,7 @@ export async function orchestratePredictions(
   agentConfigs: AgentConfig[],
 ): Promise<OrchestrationResult[]> {
   const { system, user } = buildPredictionPrompt(match);
-  const predictionWindow = match.playingXiA ? "post_xi" : "pre_match";
+  const predictionWindow = match.tossWinner || match.playingXiA ? "post_xi" : "pre_match";
 
   const tasks = agentConfigs.map((agent) =>
     runAgentWithRetry(agent, system, user, match, predictionWindow),
@@ -232,7 +232,7 @@ export async function callAgent(
   };
 
   const { system, user } = buildPredictionPrompt(match);
-  const predictionWindow = match.playingXiA ? "post_xi" : "pre_match";
+  const predictionWindow = match.tossWinner || match.playingXiA ? "post_xi" : "pre_match";
 
   return runAgentWithRetry(config, system, user, match, predictionWindow);
 }

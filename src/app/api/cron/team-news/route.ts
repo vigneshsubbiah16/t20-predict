@@ -60,16 +60,16 @@ export async function GET(request: NextRequest) {
   try {
     const now = new Date();
     const in6h = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
 
-    // Find matches within 6 hours that don't have XI yet
+    // Find matches within 6 hours ahead or 2 hours behind that don't have XI/toss yet
     const upcoming = await db
       .select()
       .from(matches)
       .where(
         and(
-          eq(matches.status, "upcoming"),
           lte(matches.scheduledAt, in6h.toISOString()),
-          gte(matches.scheduledAt, now.toISOString()),
+          gte(matches.scheduledAt, twoHoursAgo.toISOString()),
           isNull(matches.xiAnnouncedAt)
         )
       );

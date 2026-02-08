@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/predict",
-      "schedule": "0 6 * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/results",
@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/team-news",
-      "schedule": "0 12 * * *"
+      "schedule": "0 4 * * *"
     }
   ]
 }
