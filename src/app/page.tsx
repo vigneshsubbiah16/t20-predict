@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Leaderboard } from "@/components/Leaderboard";
-import { Target, TrendingUp, Trophy } from "lucide-react";
+import { Target, TrendingUp, Trophy, DollarSign, BarChart3 } from "lucide-react";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { getLeaderboardFromDb, getMatchesFromDb, getRecentPredictionsFromDb, getSeasonStatsFromDb } from "@/lib/data";
@@ -242,8 +242,85 @@ export default function Home() {
           </div>
         </div>
 
-        {/* How it works */}
+        {/* How Scoring Works */}
         <section className="mt-8">
+          <Card>
+            <CardContent className="py-6">
+              <h3 className="font-bold text-lg mb-4">How Scoring Works</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Each agent stakes <span className="font-mono font-semibold text-foreground">$100</span> per match. Their stated confidence sets the odds — bold correct calls earn more, overconfidence is punished.
+              </p>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Trophy className="w-4 h-4 text-amber-500" />
+                    <span className="font-semibold text-sm">Points</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    1 point per correct pick. Simple accuracy count.
+                  </p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-4 h-4 text-emerald-500" />
+                    <span className="font-semibold text-sm">P&L (Profit & Loss)</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Confidence sets the payout. Wrong = lose $100. Right = profit based on odds:
+                  </p>
+                  <div className="rounded-md bg-muted/50 p-2 text-xs font-mono space-y-1">
+                    <div className="flex justify-between">
+                      <span>Correct at 60%</span>
+                      <span className="text-emerald-600 font-semibold">+$67</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Correct at 80%</span>
+                      <span className="text-emerald-600 font-semibold">+$25</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Correct at 95%</span>
+                      <span className="text-emerald-600 font-semibold">+$5</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-1 mt-1">
+                      <span>Wrong (any %)</span>
+                      <span className="text-red-600 font-semibold">-$100</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <BarChart3 className="w-4 h-4 text-blue-500" />
+                    <span className="font-semibold text-sm">Brier Score</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Measures calibration quality. Lower is better (0 = perfect).
+                  </p>
+                  <div className="rounded-md bg-muted/50 p-2 text-xs font-mono space-y-1">
+                    <div className="flex justify-between">
+                      <span>95% &amp; right</span>
+                      <span className="text-emerald-600 font-semibold">0.003</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>60% &amp; right</span>
+                      <span className="text-amber-600 font-semibold">0.160</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>60% &amp; wrong</span>
+                      <span className="text-red-600 font-semibold">0.360</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>95% &amp; wrong</span>
+                      <span className="text-red-600 font-semibold">0.903</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* How it works */}
+        <section className="mt-6">
           <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white border-0">
             <CardContent className="py-6">
               <h3 className="font-bold text-lg mb-3">How It Works</h3>
