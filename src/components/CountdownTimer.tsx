@@ -55,9 +55,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     ? "text-orange-600"
     : "text-primary";
 
-  const animationClass = isCritical
-    ? "animate-countdown-urgent"
-    : isUrgent
+  const animationClass = isCritical || isUrgent
     ? "animate-countdown-urgent"
     : isAlertWindow
     ? "animate-countdown-tick"

@@ -127,7 +127,7 @@ export function Leaderboard({ entries }: LeaderboardProps) {
                   key={entry.agentId}
                   className={cn(
                     "leaderboard-row animate-card-enter",
-                    `stagger-${index + 1}`,
+                    `stagger-${Math.min(index + 1, 5)}`,
                     isFirst && "bg-amber-50/50"
                   )}
                 >
@@ -167,7 +167,7 @@ export function Leaderboard({ entries }: LeaderboardProps) {
                         <div
                           className={cn(
                             "h-full rounded-full animate-pnl-bar",
-                            `stagger-${index + 1}`,
+                            `stagger-${Math.min(index + 1, 5)}`,
                             entry.totalPnl >= 0
                               ? getAgentBarColor(entry.provider)
                               : "bg-red-400"

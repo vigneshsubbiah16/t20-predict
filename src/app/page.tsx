@@ -8,8 +8,7 @@ import { Leaderboard } from "@/components/Leaderboard";
 import { Target, TrendingUp, Trophy, AlertTriangle } from "lucide-react";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { LocalDateTime } from "@/components/LocalDateTime";
-import { getLeaderboardFromDb, getMatchesFromDb, getRecentPredictionsFromDb, getSeasonStatsFromDb } from "@/lib/data";
-import { getMatchFromDb } from "@/lib/data";
+import { getLeaderboardFromDb, getMatchesFromDb, getRecentPredictionsFromDb, getSeasonStatsFromDb, getUpsetMatchIds } from "@/lib/data";
 
 async function HeroSection() {
   try {
@@ -124,21 +123,8 @@ async function RecentResults() {
     const recent = allMatches.slice(0, 5);
     if (recent.length === 0) return null;
 
-    // Fetch prediction data for each match to detect upsets
-    const matchDetails = await Promise.all(
-      recent.map(async (m) => {
-        try {
-          const detail = await getMatchFromDb(m.id);
-          if (!detail) return { match: m, wasUpset: false };
-          const latestPreds = detail.predictions.filter((p) => p.isLatest);
-          if (latestPreds.length === 0 || !detail.winner) return { match: m, wasUpset: false };
-          const allWrong = latestPreds.every((p) => p.predictedWinner !== detail.winner);
-          return { match: m, wasUpset: allWrong && latestPreds.length > 1 };
-        } catch {
-          return { match: m, wasUpset: false };
-        }
-      })
-    );
+    // Single batch query for upset detection instead of N+1
+    const upsetIds = await getUpsetMatchIds(recent.map((m) => m.id));
 
     return (
       <Card className="animate-fade-in-up stagger-3">
@@ -146,7 +132,7 @@ async function RecentResults() {
           <CardTitle className="text-lg">Recent Results</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {matchDetails.map(({ match: m, wasUpset }) => (
+          {recent.map((m) => (
             <Link
               key={m.id}
               href={`/matches/${m.id}`}
@@ -154,7 +140,7 @@ async function RecentResults() {
             >
               <span className="flex items-center gap-1.5">
                 {m.teamA} vs {m.teamB}
-                {wasUpset && (
+                {upsetIds.has(m.id) && (
                   <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
                 )}
               </span>

@@ -89,6 +89,44 @@ export async function getMatchesFromDb(params?: {
   }));
 }
 
+/**
+ * Batch query: returns set of matchIds where all latest predictions were wrong.
+ * Single query instead of N+1 per-match lookups.
+ */
+export async function getUpsetMatchIds(matchIds: string[]): Promise<Set<string>> {
+  if (matchIds.length === 0) return new Set();
+
+  // Get all latest predictions for the given matches in one query
+  const preds = await db
+    .select({
+      matchId: predictions.matchId,
+      predictedWinner: predictions.predictedWinner,
+      isCorrect: predictions.isCorrect,
+    })
+    .from(predictions)
+    .where(
+      and(
+        eq(predictions.isLatest, true),
+        sql`${predictions.matchId} IN (${sql.join(matchIds.map((id) => sql`${id}`), sql`, `)})`
+      )
+    );
+
+  // Group by matchId and check if all predictions were wrong
+  const byMatch = new Map<string, { total: number; allWrong: boolean }>();
+  for (const p of preds) {
+    const entry = byMatch.get(p.matchId) || { total: 0, allWrong: true };
+    entry.total++;
+    if (p.isCorrect !== false) entry.allWrong = false;
+    byMatch.set(p.matchId, entry);
+  }
+
+  const upsets = new Set<string>();
+  for (const [matchId, { total, allWrong }] of byMatch) {
+    if (allWrong && total > 1) upsets.add(matchId);
+  }
+  return upsets;
+}
+
 export async function getMatchFromDb(id: string): Promise<MatchWithPredictions | null> {
   const matchRows = await db
     .select()
