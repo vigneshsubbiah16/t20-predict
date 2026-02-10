@@ -5,6 +5,7 @@ export interface AgentConfig {
   modelId: string;
   slug: string;
   color: string; // hex
+  initials: string;
   tailwindColor: string;
   tailwindBg: string;
   tailwindBorder: string;
@@ -18,6 +19,7 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     modelId: "claude-opus-4-6",
     slug: "claude",
     color: "#E87040",
+    initials: "CL",
     tailwindColor: "text-orange-600",
     tailwindBg: "bg-orange-50",
     tailwindBorder: "border-orange-200",
@@ -29,6 +31,7 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     modelId: "gpt-5.2",
     slug: "gpt",
     color: "#10A37F",
+    initials: "GPT",
     tailwindColor: "text-emerald-600",
     tailwindBg: "bg-emerald-50",
     tailwindBorder: "border-emerald-200",
@@ -40,6 +43,7 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     modelId: "gemini-3.0-pro",
     slug: "gemini",
     color: "#4285F4",
+    initials: "Gem",
     tailwindColor: "text-blue-600",
     tailwindBg: "bg-blue-50",
     tailwindBorder: "border-blue-200",
@@ -51,6 +55,7 @@ export const AGENT_CONFIGS: AgentConfig[] = [
     modelId: "grok-4",
     slug: "grok",
     color: "#8B5CF6",
+    initials: "Grk",
     tailwindColor: "text-purple-600",
     tailwindBg: "bg-purple-50",
     tailwindBorder: "border-purple-200",

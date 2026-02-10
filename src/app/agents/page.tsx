@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getLeaderboardFromDb } from "@/lib/data";
 import { getAgentConfig } from "@/lib/agents-config";
+import { ProviderIcon } from "@/components/ProviderIcon";
+import { formatPnl, pnlColorClass } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "AI Agents - T20 Predict",
@@ -30,10 +32,10 @@ export default async function AgentsPage() {
                   <CardContent className="py-5">
                     <div className="flex items-center gap-3 mb-4">
                       <div
-                        className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black text-lg shrink-0"
-                        style={{ backgroundColor: entry.color }}
+                        className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: entry.color + "15" }}
                       >
-                        {entry.displayName[0]}
+                        <ProviderIcon provider={entry.provider} size={26} color={entry.color} />
                       </div>
                       <div>
                         <h2 className="font-bold text-lg leading-tight">
@@ -67,13 +69,9 @@ export default async function AgentsPage() {
                       </div>
                       <div>
                         <p
-                          className={`text-lg font-mono font-bold ${
-                            entry.totalPnl >= 0
-                              ? "text-emerald-600"
-                              : "text-red-600"
-                          }`}
+                          className={`text-lg font-mono font-bold ${pnlColorClass(entry.totalPnl)}`}
                         >
-                          {entry.totalPnl >= 0 ? "+" : ""}${Math.abs(entry.totalPnl).toFixed(0)}
+                          {formatPnl(entry.totalPnl)}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
                           P&L

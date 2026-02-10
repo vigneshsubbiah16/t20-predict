@@ -2,7 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { predictions, predictionLogs, matches, agents } from "@/db/schema";
-import type { AgentConfig } from "@/lib/agents-config";
+import { type AgentConfig, getAgentConfig } from "@/lib/agents-config";
 import { buildPredictionPrompt } from "./prompt";
 import { callAnthropic } from "./anthropic";
 import { callOpenAI } from "./openai";
@@ -54,7 +54,7 @@ export async function orchestratePredictions(
   agentConfigs: AgentConfig[],
 ): Promise<OrchestrationResult[]> {
   const { system, user } = buildPredictionPrompt(match);
-  const predictionWindow = match.playingXiA ? "post_xi" : "pre_match";
+  const predictionWindow = match.tossWinner || match.playingXiA ? "post_xi" : "pre_match";
 
   const tasks = agentConfigs.map((agent) =>
     runAgentWithRetry(agent, system, user, match, predictionWindow),
@@ -217,20 +217,22 @@ export async function callAgent(
   match: Match,
   agent: Agent,
 ): Promise<OrchestrationResult> {
-  const config: AgentConfig = {
+  const knownConfig = getAgentConfig(agent.id);
+  const config: AgentConfig = knownConfig ?? {
     id: agent.id,
     displayName: agent.displayName,
     provider: agent.provider,
     modelId: agent.modelId,
     slug: agent.slug,
     color: agent.color,
+    initials: agent.displayName.slice(0, 2),
     tailwindColor: "",
     tailwindBg: "",
     tailwindBorder: "",
   };
 
   const { system, user } = buildPredictionPrompt(match);
-  const predictionWindow = match.playingXiA ? "post_xi" : "pre_match";
+  const predictionWindow = match.tossWinner || match.playingXiA ? "post_xi" : "pre_match";
 
   return runAgentWithRetry(config, system, user, match, predictionWindow);
 }

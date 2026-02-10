@@ -16,7 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Check, X } from "lucide-react";
-import { formatStreak } from "@/lib/utils";
+import { ProviderIcon } from "@/components/ProviderIcon";
+import { formatStreak, formatPnl, pnlColorClass } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -31,7 +32,7 @@ export async function generateMetadata({
     profile.stats.totalPredictions > 0
       ? `${Math.round(profile.stats.accuracy * 100)}%`
       : "N/A";
-  const pnl = `${profile.stats.totalPnl >= 0 ? "+" : ""}$${Math.abs(profile.stats.totalPnl).toFixed(0)}`;
+  const pnl = formatPnl(profile.stats.totalPnl);
   const description = `${profile.displayName} (${profile.provider}): ${profile.stats.points} pts, ${accuracy} accuracy, ${pnl} P&L. Track their T20 World Cup predictions.`;
 
   return {
@@ -53,6 +54,12 @@ export default async function AgentProfilePage({
   const profile = await getAgentProfileFromDb(slug);
   if (!profile) notFound();
   const config = getAgentConfig(slug);
+  const settledPredictions = profile.predictions.filter(
+    (p) => p.isCorrect !== null
+  );
+  const pendingPredictions = profile.predictions.filter(
+    (p) => p.isCorrect === null
+  );
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -61,10 +68,10 @@ export default async function AgentProfilePage({
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-xl"
-              style={{ backgroundColor: profile.color }}
+              className="w-14 h-14 rounded-2xl flex items-center justify-center"
+              style={{ backgroundColor: profile.color + "15" }}
             >
-              {profile.displayName[0]}
+              <ProviderIcon provider={profile.provider} size={32} color={profile.color} />
             </div>
             <div>
               <h1 className="text-3xl font-black">{profile.displayName}</h1>
@@ -108,14 +115,12 @@ export default async function AgentProfilePage({
           />
           <StatCard
             label="P&L"
-            value={`${profile.stats.totalPnl >= 0 ? "+" : ""}$${Math.abs(
-              profile.stats.totalPnl
-            ).toFixed(0)}`}
-            color={profile.stats.totalPnl >= 0 ? "text-emerald-600" : "text-red-600"}
+            value={formatPnl(profile.stats.totalPnl)}
+            color={pnlColorClass(profile.stats.totalPnl)}
           />
           <StatCard
             label="Bankroll"
-            value={`$${profile.stats.bankroll.toLocaleString()}`}
+            value={`$${profile.stats.bankroll.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
           />
           <StatCard
             label="Brier Score"
@@ -170,12 +175,12 @@ export default async function AgentProfilePage({
                   return (
                     <div key={h2h.agentId} className="text-center">
                       <div
-                        className="w-8 h-8 rounded-full mx-auto mb-1 flex items-center justify-center text-white text-xs font-bold"
+                        className="w-8 h-8 rounded-lg mx-auto mb-1 flex items-center justify-center"
                         style={{
-                          backgroundColor: hConfig?.color || "#888",
+                          backgroundColor: (hConfig?.color || "#888") + "15",
                         }}
                       >
-                        {h2h.displayName[0]}
+                        <ProviderIcon provider={hConfig?.provider || ""} size={16} color={hConfig?.color} />
                       </div>
                       <p className="text-xs font-medium">{h2h.displayName}</p>
                       <p className="text-lg font-mono font-bold">
@@ -193,90 +198,140 @@ export default async function AgentProfilePage({
         )}
 
         {/* Prediction History */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Prediction History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {profile.predictions.length === 0 ? (
+        {profile.predictions.length === 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Prediction History</CardTitle>
+            </CardHeader>
+            <CardContent>
               <p className="text-sm text-muted-foreground py-4 text-center">
                 No predictions yet.
               </p>
-            ) : (
-              <div className="rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Match</TableHead>
-                      <TableHead>Pick</TableHead>
-                      <TableHead className="text-right">Confidence</TableHead>
-                      <TableHead className="text-right">Result</TableHead>
-                      <TableHead className="text-right">P&L</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {profile.predictions.map((pred) => (
-                      <TableRow key={pred.id}>
-                        <TableCell>
-                          <Link
-                            href={`/matches/${pred.matchId}`}
-                            className="hover:underline text-sm"
-                          >
-                            {pred.match.teamA} vs {pred.match.teamB}
-                          </Link>
-                        </TableCell>
-                        <TableCell className="font-medium text-sm">
-                          {pred.predictedTeamName}
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm">
-                          {Math.round(pred.confidence * 100)}%
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {pred.isCorrect === true && (
-                            <Check className="w-4 h-4 text-green-600 inline" />
-                          )}
-                          {pred.isCorrect === false && (
-                            <X className="w-4 h-4 text-red-500 inline" />
-                          )}
-                          {pred.isCorrect === null && (
-                            <span className="text-xs text-muted-foreground">
-                              Pending
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell
-                          className={`text-right font-mono text-sm ${pnlColorClass(pred.pnl)}`}
-                        >
-                          {formatPnl(pred.pnl)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {profile.predictions.length > 0 && (
+          <div className="space-y-6">
+            {/* Settled Predictions */}
+            {settledPredictions.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    Settled Predictions
+                    <Badge variant="secondary" className="text-xs font-normal">
+                      {settledPredictions.length}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-lg border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Match</TableHead>
+                          <TableHead>Pick</TableHead>
+                          <TableHead className="text-right">Confidence</TableHead>
+                          <TableHead className="text-right">Result</TableHead>
+                          <TableHead className="text-right">P&L</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {settledPredictions.map((pred) => (
+                          <TableRow key={pred.id}>
+                            <TableCell>
+                              <Link
+                                href={`/matches/${pred.matchId}`}
+                                className="hover:underline text-sm"
+                              >
+                                {pred.match.teamA} vs {pred.match.teamB}
+                              </Link>
+                            </TableCell>
+                            <TableCell className="font-medium text-sm">
+                              {pred.predictedTeamName}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm">
+                              {Math.round(pred.confidence * 100)}%
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {pred.isCorrect === true && (
+                                <Check className="w-4 h-4 text-green-600 inline" />
+                              )}
+                              {pred.isCorrect === false && (
+                                <X className="w-4 h-4 text-red-500 inline" />
+                              )}
+                            </TableCell>
+                            <TableCell
+                              className={`text-right font-mono text-sm ${pnlColorClass(pred.pnl)}`}
+                            >
+                              {formatPnl(pred.pnl)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
+
+            {/* Pending Predictions */}
+            {pendingPredictions.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    Upcoming Predictions
+                    <Badge variant="outline" className="text-xs font-normal">
+                      {pendingPredictions.length}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-lg border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Match</TableHead>
+                          <TableHead>Pick</TableHead>
+                          <TableHead className="text-right">Confidence</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pendingPredictions.map((pred) => (
+                          <TableRow key={pred.id}>
+                            <TableCell>
+                              <Link
+                                href={`/matches/${pred.matchId}`}
+                                className="hover:underline text-sm"
+                              >
+                                {pred.match.teamA} vs {pred.match.teamB}
+                              </Link>
+                            </TableCell>
+                            <TableCell className="font-medium text-sm">
+                              {pred.predictedTeamName}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm">
+                              {Math.round(pred.confidence * 100)}%
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );
 }
 
-function formatPnl(pnl: number | null): string {
-  if (pnl == null) return "-";
-  const sign = pnl >= 0 ? "+" : "";
-  return `${sign}$${Math.abs(pnl).toFixed(0)}`;
-}
-
-function pnlColorClass(pnl: number | null): string {
-  if (pnl == null) return "";
-  return pnl >= 0 ? "text-emerald-600" : "text-red-600";
-}
-
 function StatCard({
   label,
   value,
-  color,
+  color = "",
 }: {
   label: string;
   value: string;
@@ -286,7 +341,7 @@ function StatCard({
     <Card>
       <CardContent className="py-3 px-4">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className={`text-xl font-mono font-bold ${color || ""}`}>{value}</p>
+        <p className={`text-xl font-mono font-bold ${color}`}>{value}</p>
       </CardContent>
     </Card>
   );
