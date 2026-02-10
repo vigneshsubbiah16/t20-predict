@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 interface CountdownTimerProps {
   targetDate: string;
@@ -36,11 +37,31 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   }
 
   const totalSeconds = Math.floor(timeLeft / 1000);
+  const totalMinutes = Math.floor(totalSeconds / 60);
   const totalHours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
   const pad = (n: number) => String(n).padStart(2, "0");
+
+  // Urgency tiers
+  const isUrgent = totalMinutes < 60;
+  const isCritical = totalMinutes < 15;
+  const isAlertWindow = totalHours < 24 && !isUrgent;
+
+  const colorClass = isCritical
+    ? "text-red-600"
+    : isUrgent
+    ? "text-orange-600"
+    : "text-primary";
+
+  const animationClass = isCritical
+    ? "animate-countdown-urgent"
+    : isUrgent
+    ? "animate-countdown-urgent"
+    : isAlertWindow
+    ? "animate-countdown-tick"
+    : "";
 
   if (totalHours >= 24) {
     const days = Math.floor(totalHours / 24);
@@ -53,7 +74,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   }
 
   return (
-    <div className="text-3xl font-black font-mono text-primary">
+    <div className={cn("text-3xl font-black font-mono", colorClass, animationClass)}>
       {pad(totalHours)}:{pad(minutes)}:{pad(seconds)}
     </div>
   );

@@ -5,10 +5,11 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Leaderboard } from "@/components/Leaderboard";
-import { Target, TrendingUp, Trophy } from "lucide-react";
+import { Target, TrendingUp, Trophy, AlertTriangle } from "lucide-react";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { getLeaderboardFromDb, getMatchesFromDb, getRecentPredictionsFromDb, getSeasonStatsFromDb } from "@/lib/data";
+import { getMatchFromDb } from "@/lib/data";
 
 async function HeroSection() {
   try {
@@ -18,7 +19,7 @@ async function HeroSection() {
 
     return (
       <Link href={`/matches/${nextMatch.id}`}>
-        <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer bg-gradient-to-r from-blue-50 to-amber-50">
+        <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-md cursor-pointer bg-gradient-to-r from-blue-50 to-amber-50 animate-fade-in-up">
           <CardContent className="py-6">
             <div className="flex items-center justify-between">
               <div>
@@ -30,7 +31,6 @@ async function HeroSection() {
                   {nextMatch.teamA} vs {nextMatch.teamB}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Match #{nextMatch.matchNumber} &middot;{" "}
                   {nextMatch.stage === "group"
                     ? `Group ${nextMatch.groupName}`
                     : nextMatch.stage}{" "}
@@ -84,7 +84,7 @@ async function ActivityFeed() {
       );
     }
     return (
-      <Card>
+      <Card className="animate-fade-in-up stagger-2">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Recent Activity</CardTitle>
         </CardHeader>
@@ -93,7 +93,7 @@ async function ActivityFeed() {
             <Link
               key={item.id}
               href={`/matches/${item.matchId}`}
-              className="flex items-start gap-2 text-sm hover:bg-muted/50 rounded p-1 -mx-1"
+              className="flex items-start gap-2 text-sm hover:bg-muted/50 rounded p-1 -mx-1 transition-colors"
             >
               <div
                 className="w-2 h-2 rounded-full mt-1.5 shrink-0"
@@ -124,20 +124,39 @@ async function RecentResults() {
     const recent = allMatches.slice(0, 5);
     if (recent.length === 0) return null;
 
+    // Fetch prediction data for each match to detect upsets
+    const matchDetails = await Promise.all(
+      recent.map(async (m) => {
+        try {
+          const detail = await getMatchFromDb(m.id);
+          if (!detail) return { match: m, wasUpset: false };
+          const latestPreds = detail.predictions.filter((p) => p.isLatest);
+          if (latestPreds.length === 0 || !detail.winner) return { match: m, wasUpset: false };
+          const allWrong = latestPreds.every((p) => p.predictedWinner !== detail.winner);
+          return { match: m, wasUpset: allWrong && latestPreds.length > 1 };
+        } catch {
+          return { match: m, wasUpset: false };
+        }
+      })
+    );
+
     return (
-      <Card>
+      <Card className="animate-fade-in-up stagger-3">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Recent Results</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {recent.map((m) => (
+          {matchDetails.map(({ match: m, wasUpset }) => (
             <Link
               key={m.id}
               href={`/matches/${m.id}`}
-              className="flex items-center justify-between text-sm hover:bg-muted/50 rounded p-1 -mx-1"
+              className="flex items-center justify-between text-sm hover:bg-muted/50 rounded p-1 -mx-1 transition-colors"
             >
-              <span>
+              <span className="flex items-center gap-1.5">
                 {m.teamA} vs {m.teamB}
+                {wasUpset && (
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                )}
               </span>
               <span className="font-medium text-emerald-600">
                 {m.winnerTeamName}
@@ -156,19 +175,11 @@ async function SeasonStats() {
   try {
     const stats = await getSeasonStatsFromDb();
     return (
-      <Card>
+      <Card className="animate-fade-in-up stagger-4">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Season Stats</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Starting Bankroll</span>
-            <span className="font-mono font-semibold">$10,000</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Stake per Bet</span>
-            <span className="font-mono font-semibold">$100</span>
-          </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Matches Played</span>
             <span className="font-mono font-semibold">
@@ -245,7 +256,7 @@ export default function Home() {
         </div>
 
         {/* How it works */}
-        <section className="mt-8">
+        <section className="mt-8 animate-fade-in-up stagger-5">
           <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white border-0">
             <CardContent className="py-6">
               <h3 className="font-bold text-lg mb-3">How It Works</h3>

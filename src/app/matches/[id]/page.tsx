@@ -65,7 +65,7 @@ export default async function MatchDetailPage({
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-6 animate-fade-in-up">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="outline">
               {match.stage === "group"
@@ -99,7 +99,7 @@ export default async function MatchDetailPage({
 
         {/* Result */}
         {match.status === "completed" && match.winnerTeamName && (
-          <Card className="mb-6 border-emerald-200 bg-emerald-50">
+          <Card className="mb-6 border-emerald-200 bg-emerald-50 animate-fade-in-up stagger-1">
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -129,7 +129,7 @@ export default async function MatchDetailPage({
 
         {/* Toss info */}
         {match.tossWinner && (
-          <Card className="mb-6">
+          <Card className="mb-6 animate-fade-in-up stagger-2">
             <CardContent className="py-3 text-sm">
               <span className="font-medium">{match.tossWinner}</span> won the
               toss and chose to{" "}
@@ -139,7 +139,7 @@ export default async function MatchDetailPage({
         )}
 
         {/* Prediction Battle */}
-        <section className="mb-8">
+        <section className="mb-8 animate-fade-in-up stagger-3">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">AI Predictions</h2>
             {!match.winner && latestPredictions.length > 0 && (
@@ -161,7 +161,7 @@ export default async function MatchDetailPage({
 
         {/* Prior predictions (if post_xi replaced pre_match) */}
         {priorPredictions.length > 0 && (
-          <section className="mb-8">
+          <section className="mb-8 animate-fade-in-up stagger-4">
             <h2 className="text-lg font-bold mb-3 text-muted-foreground">
               Pre-Match Predictions (before XI announcement)
             </h2>
@@ -176,7 +176,7 @@ export default async function MatchDetailPage({
 
         {/* Playing XI */}
         {(xiA.length > 0 || xiB.length > 0) && (
-          <section className="mb-8">
+          <section className="mb-8 animate-fade-in-up stagger-5">
             <h2 className="text-lg font-bold mb-3">Playing XI</h2>
             <div className="grid md:grid-cols-2 gap-4">
               {xiA.length > 0 && (
