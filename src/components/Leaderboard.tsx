@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { LeaderboardEntry } from "@/lib/api";
-import { formatStreak, formatPnl, pnlColorClass } from "@/lib/utils";
+import { cn, formatStreak, formatPnl, pnlColorClass } from "@/lib/utils";
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[];
@@ -46,6 +46,21 @@ function getProviderColor(provider: string): string {
   }
 }
 
+function getAgentBarColor(provider: string): string {
+  switch (provider.toLowerCase()) {
+    case "anthropic":
+      return "bg-orange-500";
+    case "openai":
+      return "bg-emerald-500";
+    case "google":
+      return "bg-blue-500";
+    case "xai":
+      return "bg-purple-500";
+    default:
+      return "bg-gray-500";
+  }
+}
+
 export function Leaderboard({ entries }: LeaderboardProps) {
   const [sortBy, setSortBy] = useState<"points" | "pnl" | "brier">("points");
 
@@ -62,8 +77,11 @@ export function Leaderboard({ entries }: LeaderboardProps) {
     }
   });
 
+  // Compute max P&L for proportional bar
+  const maxPnl = Math.max(...sorted.map((e) => Math.abs(e.totalPnl)), 1);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in-up">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">Leaderboard</h2>
         <Tabs
@@ -92,56 +110,92 @@ export function Leaderboard({ entries }: LeaderboardProps) {
               <TableHead>Agent</TableHead>
               <TableHead className="text-right">Pts</TableHead>
               <TableHead className="text-right">Accuracy</TableHead>
-              <TableHead className="text-right">P&L</TableHead>
+              <TableHead className="text-right w-36">P&L</TableHead>
               <TableHead className="text-right hidden sm:table-cell">Brier</TableHead>
               <TableHead className="text-right hidden sm:table-cell">Streak</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((entry, index) => (
-              <TableRow key={entry.agentId}>
-                <TableCell>{getRankBadge(index + 1)}</TableCell>
-                <TableCell>
-                  <Link
-                    href={`/agents/${entry.slug}`}
-                    className="flex items-center gap-2 hover:underline"
-                  >
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: entry.color }}
-                    />
-                    <span className="font-medium">{entry.displayName}</span>
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] ${getProviderColor(entry.provider)}`}
-                    >
-                      {entry.provider}
-                    </Badge>
-                  </Link>
-                </TableCell>
-                <TableCell className="text-right font-mono font-bold">
-                  {entry.points}
-                </TableCell>
-                <TableCell className="text-right font-mono">
-                  {entry.totalPredictions > 0
-                    ? `${Math.round(entry.accuracy * 100)}%`
-                    : "-"}
-                </TableCell>
-                <TableCell
-                  className={`text-right font-mono font-semibold ${pnlColorClass(entry.totalPnl)}`}
+            {sorted.map((entry, index) => {
+              const isFirst = index === 0;
+              const pnlBarWidth = maxPnl > 0
+                ? (Math.abs(entry.totalPnl) / maxPnl) * 100
+                : 0;
+
+              return (
+                <TableRow
+                  key={entry.agentId}
+                  className={cn(
+                    "leaderboard-row animate-card-enter",
+                    `stagger-${Math.min(index + 1, 5)}`,
+                    isFirst && "bg-amber-50/50"
+                  )}
                 >
-                  {formatPnl(entry.totalPnl)}
-                </TableCell>
-                <TableCell className="text-right font-mono hidden sm:table-cell">
-                  {entry.totalPredictions > 0
-                    ? entry.avgBrier.toFixed(3)
-                    : "-"}
-                </TableCell>
-                <TableCell className="text-right font-mono hidden sm:table-cell">
-                  {formatStreak(entry.currentStreak)}
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell>{getRankBadge(index + 1)}</TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/agents/${entry.slug}`}
+                      className="flex items-center gap-2 hover:underline"
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full shrink-0"
+                        style={{ backgroundColor: entry.color }}
+                      />
+                      <span className={cn("font-medium", isFirst && "font-bold")}>
+                        {entry.displayName}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] ${getProviderColor(entry.provider)}`}
+                      >
+                        {entry.provider}
+                      </Badge>
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-right font-mono font-bold">
+                    {entry.points}
+                  </TableCell>
+                  <TableCell className="text-right font-mono">
+                    {entry.totalPredictions > 0
+                      ? `${Math.round(entry.accuracy * 100)}%`
+                      : "-"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {/* P&L proportional bar */}
+                      <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden hidden sm:block">
+                        <div
+                          className={cn(
+                            "h-full rounded-full animate-pnl-bar",
+                            `stagger-${Math.min(index + 1, 5)}`,
+                            entry.totalPnl >= 0
+                              ? getAgentBarColor(entry.provider)
+                              : "bg-red-400"
+                          )}
+                          style={{ width: `${pnlBarWidth}%` }}
+                        />
+                      </div>
+                      <span
+                        className={cn(
+                          "font-mono font-semibold tabular-nums",
+                          pnlColorClass(entry.totalPnl)
+                        )}
+                      >
+                        {formatPnl(entry.totalPnl)}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-mono hidden sm:table-cell">
+                    {entry.totalPredictions > 0
+                      ? entry.avgBrier.toFixed(3)
+                      : "-"}
+                  </TableCell>
+                  <TableCell className="text-right font-mono hidden sm:table-cell">
+                    {formatStreak(entry.currentStreak)}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {sorted.length === 0 && (
               <TableRow>
                 <TableCell
