@@ -66,7 +66,7 @@ export default function RootLayout({
               <div>
                 <p className="font-medium text-foreground">T20 Predict</p>
                 <p className="text-xs mt-0.5">
-                  ICC Men&apos;s T20 World Cup 2026 &middot; Feb 17 – Mar 22, 2026 &middot; India & Sri Lanka
+                  ICC Men&apos;s T20 World Cup 2026 &middot; Feb 7 – Mar 8, 2026 &middot; India & Sri Lanka
                 </p>
               </div>
               <div className="flex items-center gap-4">
