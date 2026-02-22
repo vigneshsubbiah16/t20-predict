@@ -231,7 +231,7 @@ export default async function AgentProfilePage({
                             <TableCell>
                               <Link
                                 href={`/matches/${pred.matchId}`}
-                                className="hover:underline text-sm"
+                                className="hover:underline text-sm cursor-pointer"
                               >
                                 {pred.match.teamA} vs {pred.match.teamB}
                               </Link>
@@ -286,7 +286,7 @@ export default async function AgentProfilePage({
                             <TableCell>
                               <Link
                                 href={`/matches/${pred.matchId}`}
-                                className="hover:underline text-sm"
+                                className="hover:underline text-sm cursor-pointer"
                               >
                                 {pred.match.teamA} vs {pred.match.teamB}
                               </Link>

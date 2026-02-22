@@ -39,7 +39,7 @@ export default function RootLayout({
         <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-3">
+              <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                 <div className="w-9 h-9 bg-gradient-to-br from-orange-500 via-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                   <span className="text-white font-black text-sm">AI</span>
                 </div>
@@ -70,13 +70,13 @@ export default function RootLayout({
                 </p>
               </div>
               <div className="flex items-center gap-4">
-                <Link href="/matches" className="hover:text-foreground">
+                <Link href="/matches" className="hover:text-foreground transition-colors">
                   All Matches
                 </Link>
-                <Link href="/agents" className="hover:text-foreground">
+                <Link href="/agents" className="hover:text-foreground transition-colors">
                   Agents
                 </Link>
-                <Link href="/how-it-works" className="hover:text-foreground">
+                <Link href="/how-it-works" className="hover:text-foreground transition-colors">
                   How It Works
                 </Link>
               </div>

@@ -238,7 +238,7 @@ export default async function MatchDetailPage({
           {adjacent.prev ? (
             <Link
               href={`/matches/${adjacent.prev.id}`}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>{adjacent.prev.teamA} vs {adjacent.prev.teamB}</span>
@@ -248,14 +248,14 @@ export default async function MatchDetailPage({
           )}
           <Link
             href="/matches"
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             All Matches
           </Link>
           {adjacent.next ? (
             <Link
               href={`/matches/${adjacent.next.id}`}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <span>{adjacent.next.teamA} vs {adjacent.next.teamB}</span>
               <ChevronRight className="w-4 h-4" />
