@@ -15,32 +15,45 @@ import { formatMatchLabel } from "@/lib/utils";
 
 async function HeroSection() {
   try {
-    const matches = await getMatchesFromDb({ status: "upcoming" });
-    const nextMatch = matches[0];
-    if (!nextMatch) return null;
+    // Check for live matches first, then fall back to upcoming
+    const [liveMatches, upcomingMatches] = await Promise.all([
+      getMatchesFromDb({ status: "live" }),
+      getMatchesFromDb({ status: "upcoming" }),
+    ]);
+
+    const isLive = liveMatches.length > 0;
+    const heroMatch = liveMatches[0] || upcomingMatches[0];
+    if (!heroMatch) return null;
 
     return (
-      <Link href={`/matches/${nextMatch.id}`}>
-        <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-md cursor-pointer bg-gradient-to-r from-blue-50 to-amber-50 animate-fade-in-up">
+      <Link href={`/matches/${heroMatch.id}`}>
+        <Card className={`border-2 hover:border-primary/50 transition-all hover:shadow-md cursor-pointer animate-fade-in-up ${isLive ? "bg-gradient-to-r from-red-50 to-orange-50 border-red-200" : "bg-gradient-to-r from-blue-50 to-amber-50"}`}>
           <CardContent className="py-6">
             <div className="flex items-center justify-between">
               <div>
-                <Badge variant="secondary" className="mb-2 bg-orange-100 text-orange-700 border-orange-200">
-                  <Target className="w-3 h-3 mr-1" />
-                  NEXT MATCH
-                </Badge>
+                {isLive ? (
+                  <Badge variant="secondary" className="mb-2 bg-red-100 text-red-700 border-red-200 animate-pulse">
+                    <Target className="w-3 h-3 mr-1" />
+                    LIVE
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="mb-2 bg-orange-100 text-orange-700 border-orange-200">
+                    <Target className="w-3 h-3 mr-1" />
+                    NEXT MATCH
+                  </Badge>
+                )}
                 <h2 className="text-2xl font-black">
-                  {nextMatch.teamA} vs {nextMatch.teamB}
+                  {heroMatch.teamA} vs {heroMatch.teamB}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {formatMatchLabel(nextMatch.stage, nextMatch.groupName)} &middot;{" "}
-                  {nextMatch.venue}
+                  {formatMatchLabel(heroMatch.stage, heroMatch.groupName)} &middot;{" "}
+                  {heroMatch.venue}
                 </p>
               </div>
               <div className="text-right">
-                <CountdownTimer targetDate={nextMatch.scheduledAt} />
+                <CountdownTimer targetDate={heroMatch.scheduledAt} />
                 <p className="text-xs text-muted-foreground mt-1">
-                  <LocalDateTime dateString={nextMatch.scheduledAt} format="date-only" />
+                  <LocalDateTime dateString={heroMatch.scheduledAt} format="date-only" />
                 </p>
               </div>
             </div>

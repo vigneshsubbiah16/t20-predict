@@ -73,6 +73,9 @@ export default function RootLayout({
                 <Link href="/matches" className="hover:text-foreground">
                   All Matches
                 </Link>
+                <Link href="/compare" className="hover:text-foreground">
+                  Compare
+                </Link>
                 <Link href="/agents" className="hover:text-foreground">
                   Agents
                 </Link>

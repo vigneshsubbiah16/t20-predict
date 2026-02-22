@@ -122,6 +122,11 @@ function MatchCard({
                 Abandoned
               </Badge>
             )}
+            {match.status === "live" && (
+              <Badge variant="secondary" className="text-[10px] bg-red-100 text-red-700 border-red-200 animate-pulse">
+                LIVE
+              </Badge>
+            )}
             {match.status === "upcoming" && (
               <Badge variant="outline" className="text-[10px]">
                 Upcoming
