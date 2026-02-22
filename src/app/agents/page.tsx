@@ -234,13 +234,16 @@ function MatchSection({
                 <th className="text-left py-2 px-3 font-medium text-xs text-muted-foreground min-w-[80px]">
                   Winner
                 </th>
+                <th className="text-left py-2 px-3 font-medium text-xs text-muted-foreground min-w-[120px]">
+                  Result
+                </th>
                 {AGENT_CONFIGS.map((agent) => (
                   <th
                     key={agent.id}
                     className="text-center py-2 px-2 font-medium text-xs min-w-[90px]"
                     style={{ color: agent.color }}
                   >
-                    {agent.initials}
+                    {agent.slug.charAt(0).toUpperCase() + agent.slug.slice(1)}
                   </th>
                 ))}
               </tr>
@@ -285,6 +288,13 @@ function MatchSection({
                         <span className="font-semibold text-xs">
                           {match.winnerTeamName}
                         </span>
+                      )}
+                    </td>
+                    <td className="py-2 px-3 text-xs text-muted-foreground max-w-[180px]">
+                      {isAbandoned ? (
+                        <span className="text-gray-400">Abandoned</span>
+                      ) : (
+                        match.resultSummary || "—"
                       )}
                     </td>
                     {agentOrder.map((agentId) => {
