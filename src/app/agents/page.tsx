@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { getLeaderboardFromDb } from "@/lib/data";
 import { getAgentConfig } from "@/lib/agents-config";
 import { ProviderIcon } from "@/components/ProviderIcon";
-import { formatPnl, pnlColorClass } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "AI Agents - T20 Predict",
@@ -48,7 +47,7 @@ export default async function AgentsPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-2 text-center">
+                    <div className="grid grid-cols-3 gap-2 text-center">
                       <div>
                         <p className="text-lg font-mono font-bold">
                           {entry.points}
@@ -65,16 +64,6 @@ export default async function AgentsPage() {
                         </p>
                         <p className="text-[10px] text-muted-foreground">
                           Accuracy
-                        </p>
-                      </div>
-                      <div>
-                        <p
-                          className={`text-lg font-mono font-bold ${pnlColorClass(entry.totalPnl)}`}
-                        >
-                          {formatPnl(entry.totalPnl)}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground">
-                          P&L
                         </p>
                       </div>
                       <div>

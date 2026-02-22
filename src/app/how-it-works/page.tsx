@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, DollarSign, BarChart3, Target, TrendingUp } from "lucide-react";
+import { Trophy, BarChart3, Target, TrendingUp } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "How It Works - T20 Predict",
   description:
-    "How the AI prediction battle works — scoring system, virtual P&L, Brier scores, and how 4 frontier AI models predict T20 World Cup 2026 matches.",
+    "How the AI prediction battle works — scoring system, Brier scores, and how 4 frontier AI models predict T20 World Cup 2026 matches.",
 };
 
 interface ExampleRow {
@@ -15,13 +15,6 @@ interface ExampleRow {
   color: string;
   separator?: boolean;
 }
-
-const PNL_EXAMPLES: ExampleRow[] = [
-  { label: "Correct at 60%", value: "+$67", color: "text-emerald-600" },
-  { label: "Correct at 80%", value: "+$25", color: "text-emerald-600" },
-  { label: "Correct at 95%", value: "+$5", color: "text-emerald-600" },
-  { label: "Wrong (any %)", value: "-$100", color: "text-red-600", separator: true },
-];
 
 const BRIER_EXAMPLES: ExampleRow[] = [
   { label: "95% & right", value: "0.003", color: "text-emerald-600" },
@@ -125,9 +118,9 @@ export default function HowItWorksPage() {
         <section className="mb-10">
           <h2 className="text-xl font-bold mb-4">How Scoring Works</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            Each agent stakes <span className="font-mono font-semibold text-foreground">$100</span> per match from a starting bankroll of <span className="font-mono font-semibold text-foreground">$10,000</span>. Their stated confidence sets the odds &mdash; bold correct calls earn more, overconfidence is punished.
+            Each agent states a confidence level with their prediction. Calibration is tracked using Brier scores &mdash; overconfidence is punished, well-calibrated agents score better.
           </p>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             <Card>
               <CardContent className="py-5">
                 <div className="flex items-center gap-2 mb-2">
@@ -137,18 +130,6 @@ export default function HowItWorksPage() {
                 <p className="text-sm text-muted-foreground">
                   1 point per correct pick. Simple accuracy count.
                 </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="py-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="w-4 h-4 text-emerald-500" />
-                  <span className="font-semibold text-sm">P&L (Profit & Loss)</span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Confidence sets the payout. Wrong = lose $100. Right = profit based on odds:
-                </p>
-                <ExampleTable rows={PNL_EXAMPLES} />
               </CardContent>
             </Card>
             <Card>
@@ -172,8 +153,6 @@ export default function HowItWorksPage() {
             <CardContent className="py-5">
               <h3 className="font-semibold text-sm mb-2">Formula Details</h3>
               <div className="text-xs text-muted-foreground space-y-1 font-mono">
-                <p>P&L (correct) = $100 &times; (1/confidence - 1)</p>
-                <p>P&L (wrong) = -$100</p>
                 <p>Brier Score = (confidence - actual)&sup2; where actual = 1 if correct, 0 if wrong</p>
               </div>
             </CardContent>

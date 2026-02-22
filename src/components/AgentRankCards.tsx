@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import type { LeaderboardEntry } from "@/lib/api";
 import { ProviderIcon } from "@/components/ProviderIcon";
-import { formatPnl, formatStreak, pnlColorClass, sortByRank } from "@/lib/utils";
+import { formatStreak, sortByRank } from "@/lib/utils";
 
 const RANK_MEDALS: Record<number, string> = {
   1: "\u{1F947}",
@@ -61,16 +61,10 @@ export function AgentRankCards({ entries }: AgentRankCardsProps) {
                 </div>
 
                 {/* Stats row */}
-                <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="grid grid-cols-3 gap-2 text-center">
                   <div>
                     <div className="text-xl font-black font-mono">{entry.points}</div>
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Points</div>
-                  </div>
-                  <div>
-                    <div className={`text-xl font-black font-mono ${pnlColorClass(entry.totalPnl)}`}>
-                      {formatPnl(entry.totalPnl)}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">P&L</div>
                   </div>
                   <div>
                     <div className="text-xl font-black font-mono">
@@ -84,14 +78,6 @@ export function AgentRankCards({ entries }: AgentRankCardsProps) {
                     </div>
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Streak</div>
                   </div>
-                </div>
-
-                {/* Bankroll footer */}
-                <div className="mt-3 pt-3 border-t text-xs text-muted-foreground flex justify-between">
-                  <span>Bankroll</span>
-                  <span className="font-mono font-semibold text-foreground">
-                    ${entry.bankroll.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                  </span>
                 </div>
               </CardContent>
             </Card>

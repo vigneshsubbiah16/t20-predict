@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Check, X } from "lucide-react";
 import { ProviderIcon } from "@/components/ProviderIcon";
-import { formatStreak, formatPnl, pnlColorClass } from "@/lib/utils";
+import { formatStreak } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -32,8 +32,7 @@ export async function generateMetadata({
     profile.stats.totalPredictions > 0
       ? `${Math.round(profile.stats.accuracy * 100)}%`
       : "N/A";
-  const pnl = formatPnl(profile.stats.totalPnl);
-  const description = `${profile.displayName} (${profile.provider}): ${profile.stats.points} pts, ${accuracy} accuracy, ${pnl} P&L. Track their T20 World Cup predictions.`;
+  const description = `${profile.displayName} (${profile.provider}): ${profile.stats.points} pts, ${accuracy} accuracy. Track their T20 World Cup predictions.`;
 
   return {
     title: `${profile.displayName} - T20 Predict`,
@@ -112,15 +111,6 @@ export default async function AgentProfilePage({
                 ? `${Math.round(profile.stats.accuracy * 100)}%`
                 : "-"
             }
-          />
-          <StatCard
-            label="P&L"
-            value={formatPnl(profile.stats.totalPnl)}
-            color={pnlColorClass(profile.stats.totalPnl)}
-          />
-          <StatCard
-            label="Bankroll"
-            value={`$${profile.stats.bankroll.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
           />
           <StatCard
             label="Brier Score"
@@ -233,7 +223,6 @@ export default async function AgentProfilePage({
                           <TableHead>Pick</TableHead>
                           <TableHead className="text-right">Confidence</TableHead>
                           <TableHead className="text-right">Result</TableHead>
-                          <TableHead className="text-right">P&L</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -260,11 +249,6 @@ export default async function AgentProfilePage({
                               {pred.isCorrect === false && (
                                 <X className="w-4 h-4 text-red-500 inline" />
                               )}
-                            </TableCell>
-                            <TableCell
-                              className={`text-right font-mono text-sm ${pnlColorClass(pred.pnl)}`}
-                            >
-                              {formatPnl(pred.pnl)}
                             </TableCell>
                           </TableRow>
                         ))}

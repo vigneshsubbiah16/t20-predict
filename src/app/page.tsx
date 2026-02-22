@@ -170,12 +170,6 @@ async function SeasonStats() {
               <span className="text-muted-foreground">Predictions</span>
               <span className="font-mono font-semibold">{stats.totalPredictions}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">Best Return</span>
-              <span className="font-mono font-semibold text-emerald-600">
-                {stats.bestSingleMatchPnl > 0 ? `+$${stats.bestSingleMatchPnl.toFixed(0)}` : "-"}
-              </span>
-            </div>
           </div>
         </CardContent>
       </Card>
